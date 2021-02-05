@@ -1,7 +1,7 @@
 #!/bin/bash
 conda activate rl-plasticity-experiments
 
-cd ~/rl-plasticity-experiments/src || exit
+cd ~/workspace/rl-plasticity-experiments/src || exit
 python experiments.py --algo_name ppo2 \
 					  --env_name Pendulum-v0 \
 					  --num_iterations 15 \
