@@ -32,7 +32,7 @@ class AgentStub(AbstractAgent):
         self.env_variables = env_variables
         self.logger = Log("AgentStub")
 
-        self.best_model_to_load_path = PREFIX_DIR_MODELS_SAVE + '/' + self.algo_name + '/logs_' + self.tb_log_name
+        self.best_model_to_load_path = PREFIX_DIR_MODELS_SAVE + "/" + self.algo_name + "/logs_" + self.tb_log_name
 
     def train(
         self,
@@ -41,7 +41,7 @@ class AgentStub(AbstractAgent):
         current_iteration: int = -1,
         search_suffix: str = "1",
         env_variables: EnvVariables = None,
-        random_search: bool = False
+        random_search: bool = False,
     ):
 
         continue_learning_model_save_path = (

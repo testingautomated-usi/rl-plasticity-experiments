@@ -1,32 +1,30 @@
+import copy
+import random
 import threading
+import time
 from queue import Queue
 
 from algo.get_binary_search_candidate import get_binary_search_candidate
 from envs.env_variables import EnvVariables
 from execution.runner import Runner
-import copy
-
 from log import Log
 from utilities import norm
-import time
-import random
 
 
 class BinarySearchWorker(threading.Thread):
-
     def __init__(
-            self,
-            queue: Queue,
-            queue_result: Queue,
-            runner: Runner,
-            start_time: float,
-            init_env_variables: EnvVariables,
-            param_names,
-            param_names_string: str,
-            algo_name: str,
-            env_name: str,
-            binary_search_epsilon: float,
-            discrete_action_space: bool,
+        self,
+        queue: Queue,
+        queue_result: Queue,
+        runner: Runner,
+        start_time: float,
+        init_env_variables: EnvVariables,
+        param_names,
+        param_names_string: str,
+        algo_name: str,
+        env_name: str,
+        binary_search_epsilon: float,
+        discrete_action_space: bool,
     ):
         threading.Thread.__init__(self)
         self.queue = queue
@@ -35,7 +33,7 @@ class BinarySearchWorker(threading.Thread):
         self.start_time = start_time
         self.algo_name = algo_name
         self.env_name = env_name
-        self.logger = Log('binary_search_worker')
+        self.logger = Log("binary_search_worker")
         self.binary_search_epsilon = binary_search_epsilon
         self.init_env_variables = init_env_variables
         self.param_names = param_names
@@ -47,8 +45,11 @@ class BinarySearchWorker(threading.Thread):
         while True:
             # Get the work from the queue and expand the tuple
             current_env_variables, current_iteration, buffer_env_predicate_pairs = self.queue.get()
-            self.logger.info('Env variables for binary search: {}, Iteration: {}'.format(
-                        current_env_variables.get_params_string(), current_iteration))
+            self.logger.info(
+                "Env variables for binary search: {}, Iteration: {}".format(
+                    current_env_variables.get_params_string(), current_iteration
+                )
+            )
 
             t_env_variables = copy.deepcopy(self.init_env_variables)
             f_env_variables = copy.deepcopy(current_env_variables)
@@ -74,7 +75,7 @@ class BinarySearchWorker(threading.Thread):
                     env_name=self.env_name,
                     param_names=self.param_names,
                     discrete_action_space=self.discrete_action_space,
-                    buffer_env_predicate_pairs=buffer_env_predicate_pairs
+                    buffer_env_predicate_pairs=buffer_env_predicate_pairs,
                 )
 
                 self.logger.debug("New env after binary search: {}".format(new_env_variables.get_params_string()))
@@ -89,12 +90,10 @@ class BinarySearchWorker(threading.Thread):
                 regression_times.append(regression_time)
                 env_predicate_pairs.append(env_predicate_pair)
                 if env_predicate_pair.is_predicate():
-                    self.logger.debug(
-                        "New t_env found: {}".format(env_predicate_pair.get_env_variables().get_params_string()))
+                    self.logger.debug("New t_env found: {}".format(env_predicate_pair.get_env_variables().get_params_string()))
                     t_env_variables = copy.deepcopy(env_predicate_pair.get_env_variables())
                 else:
-                    self.logger.debug(
-                        "New f_env found: {}".format(env_predicate_pair.get_env_variables().get_params_string()))
+                    self.logger.debug("New f_env found: {}".format(env_predicate_pair.get_env_variables().get_params_string()))
                     f_env_variables = copy.deepcopy(env_predicate_pair.get_env_variables())
 
                 dist = norm(env_vars_1=f_env_variables, env_vars_2=t_env_variables) / norm(env_vars_1=t_env_variables)
@@ -109,9 +108,17 @@ class BinarySearchWorker(threading.Thread):
                     search_suffix += self.param_names_string + "_"
                 search_suffix += str(current_iteration) + "_" + str(binary_search_counter)
 
-            self.logger.info('dist {} <= binary_search_epsilon {}'.format(dist, self.binary_search_epsilon))
-            self.queue_result.put_nowait((t_env_variables, f_env_variables,
-                                          env_predicate_pairs, max_binary_search_iterations,
-                                          binary_search_counter, current_iteration, execution_times,
-                                          regression_times))
+            self.logger.info("dist {} <= binary_search_epsilon {}".format(dist, self.binary_search_epsilon))
+            self.queue_result.put_nowait(
+                (
+                    t_env_variables,
+                    f_env_variables,
+                    env_predicate_pairs,
+                    max_binary_search_iterations,
+                    binary_search_counter,
+                    current_iteration,
+                    execution_times,
+                    regression_times,
+                )
+            )
             self.queue.task_done()

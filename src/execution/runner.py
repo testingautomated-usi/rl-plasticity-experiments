@@ -14,12 +14,14 @@ from execution.execution_result import ExecutionResult
 from log import Log
 
 
-def execute_train(agent: AbstractAgent,
-                  current_iteration: int,
-                  search_suffix: str,
-                  current_env_variables: EnvVariables,
-                  _start_time: float,
-                  random_search: bool = False) -> Tuple[EnvPredicatePair, float, float]:
+def execute_train(
+    agent: AbstractAgent,
+    current_iteration: int,
+    search_suffix: str,
+    current_env_variables: EnvVariables,
+    _start_time: float,
+    random_search: bool = False,
+) -> Tuple[EnvPredicatePair, float, float]:
 
     env_predicate_pairs = []
     communication_queue = Queue()
@@ -39,8 +41,7 @@ def execute_train(agent: AbstractAgent,
     while True:
         data: ExecutionResult = communication_queue.get()  # blocking code
         logger.debug(
-            "Env: {}, evaluates to {}".format(current_env_variables.get_params_string(),
-                                              data.is_adequate_performance(), )
+            "Env: {}, evaluates to {}".format(current_env_variables.get_params_string(), data.is_adequate_performance(),)
         )
         logger.debug("Info: {}".format(data.get_info()))
         env_predicate_pairs.append(
@@ -49,7 +50,7 @@ def execute_train(agent: AbstractAgent,
                 predicate=data.is_adequate_performance(),
                 regression=data.is_regression(),
                 execution_info=data.get_info(),
-                model_dirs=[search_suffix]
+                model_dirs=[search_suffix],
             )
         )
         sum_regression_time += data.get_regression_time()
@@ -66,7 +67,6 @@ def execute_train(agent: AbstractAgent,
 
 
 class ProbabilityEstimationWorker(threading.Thread):
-
     def __init__(self, queue: Queue, queue_result: Queue, agent: AbstractAgent, start_time: float, random_search: bool):
         threading.Thread.__init__(self)
         self.queue = queue
@@ -79,10 +79,14 @@ class ProbabilityEstimationWorker(threading.Thread):
         while True:
             # Get the work from the queue and expand the tuple
             current_iteration, search_suffix, current_env_variables = self.queue.get()
-            env_predicate_pair, execution_time, regression_time = \
-                execute_train(agent=self.agent, current_iteration=current_iteration, search_suffix=search_suffix,
-                              current_env_variables=current_env_variables, _start_time=self.start_time,
-                              random_search=self.random_search)
+            env_predicate_pair, execution_time, regression_time = execute_train(
+                agent=self.agent,
+                current_iteration=current_iteration,
+                search_suffix=search_suffix,
+                current_env_variables=current_env_variables,
+                _start_time=self.start_time,
+                random_search=self.random_search,
+            )
             self.queue_result.put_nowait((env_predicate_pair, execution_time, regression_time))
             self.queue.task_done()
 
@@ -94,8 +98,12 @@ class Runner:
         self.runs_for_probability_estimation = runs_for_probability_estimation
 
     def execute_train(
-        self, current_iteration: int, search_suffix: str, current_env_variables: EnvVariables, _start_time: float,
-            random_search: bool = False
+        self,
+        current_iteration: int,
+        search_suffix: str,
+        current_env_variables: EnvVariables,
+        _start_time: float,
+        random_search: bool = False,
     ) -> Tuple[EnvPredicatePair, float, float]:
         if self.runs_for_probability_estimation == 1:
             env_predicate_pair, execution_time, regression_time = execute_train(
@@ -106,24 +114,24 @@ class Runner:
                 _start_time=_start_time,
                 random_search=random_search,
             )
-            self.logger.debug('--------------------------------------------------: end runner execution')
+            self.logger.debug("--------------------------------------------------: end runner execution")
             return env_predicate_pair, execution_time, regression_time
         execution_start_time = time.time()
 
         num_of_cpus = multiprocessing.cpu_count()
-        num_of_processes_to_spawn = self.runs_for_probability_estimation \
-            if num_of_cpus >= self.runs_for_probability_estimation else num_of_cpus - 1
-        self.logger.debug('num of processes to spawn: {}'.format(num_of_processes_to_spawn))
+        num_of_processes_to_spawn = (
+            self.runs_for_probability_estimation if num_of_cpus >= self.runs_for_probability_estimation else num_of_cpus - 1
+        )
+        self.logger.debug("num of processes to spawn: {}".format(num_of_processes_to_spawn))
 
-        search_suffixes = [search_suffix + '_run_' + str(i) for i in range(self.runs_for_probability_estimation)]
+        search_suffixes = [search_suffix + "_run_" + str(i) for i in range(self.runs_for_probability_estimation)]
 
         queue = Queue()
         queue_result = Queue()
         # Create worker threads
         for _ in range(num_of_processes_to_spawn):
             worker = ProbabilityEstimationWorker(
-                queue=queue, queue_result=queue_result, agent=self.agent, start_time=_start_time,
-                random_search=random_search
+                queue=queue, queue_result=queue_result, agent=self.agent, start_time=_start_time, random_search=random_search
             )
             # Setting daemon to True will let the main thread exit even though the workers are blocking
             worker.daemon = True
@@ -160,25 +168,24 @@ class Runner:
             env_variables=current_env_variables,
             probability_estimation_runs=adequate_performance_list,
             regression_estimation_runs=regression_list,
-            model_dirs=search_suffixes
+            model_dirs=search_suffixes,
         )
-        self.logger.debug('--------------------------------------------------: end runner execution')
+        self.logger.debug("--------------------------------------------------: end runner execution")
         return env_predicate_pair, execution_time, regression_time
 
-    def execute_test_with_callback(self, current_env_variables: EnvVariables, n_eval_episodes: int = None)\
-            -> EnvPredicatePair:
+    def execute_test_with_callback(self, current_env_variables: EnvVariables, n_eval_episodes: int = None) -> EnvPredicatePair:
         seed = np.random.randint(2 ** 32 - 1)
-        return self.agent.test_with_callback(seed=seed, env_variables=current_env_variables,
-                                             n_eval_episodes=n_eval_episodes)
+        return self.agent.test_with_callback(seed=seed, env_variables=current_env_variables, n_eval_episodes=n_eval_episodes)
 
     def execute_test_without_callback(self, n_eval_episodes: int, model_path: str) -> Tuple[float, float]:
         seed = np.random.randint(2 ** 32 - 1)
         return self.agent.test_without_callback(seed=seed, n_eval_episodes=n_eval_episodes, model_path=model_path)
 
-    def execute_train_without_evaluation(self, current_iteration: int,
-                                         current_env_variables: EnvVariables,
-                                         search_suffix: str = "1") -> None:
+    def execute_train_without_evaluation(
+        self, current_iteration: int, current_env_variables: EnvVariables, search_suffix: str = "1"
+    ) -> None:
         # agent.train sets seed globally (for tf, np and random)
         seed = np.random.randint(2 ** 32 - 1)
-        self.agent.train(seed=seed, current_iteration=current_iteration, search_suffix=search_suffix,
-                         env_variables=current_env_variables)
+        self.agent.train(
+            seed=seed, current_iteration=current_iteration, search_suffix=search_suffix, env_variables=current_env_variables
+        )

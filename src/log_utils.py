@@ -1,5 +1,6 @@
 import numpy as np
-from stable_baselines.results_plotter import X_EPISODES, X_TIMESTEPS, X_WALLTIME
+from stable_baselines.results_plotter import (X_EPISODES, X_TIMESTEPS,
+                                              X_WALLTIME)
 
 
 def _ts2xy(timesteps, xaxis):

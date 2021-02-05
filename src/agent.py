@@ -1,46 +1,53 @@
 import csv
 import glob
-from typing import Tuple
-
-import stable_baselines3
-from stable_baselines3.common.utils import get_linear_fn, set_random_seed
-from tensorflow.python.platform import tf_logging as tf_log
-import gym
 import multiprocessing
 import os
 import warnings
 from queue import Queue
+from typing import Tuple
 
+import gym
 import numpy as np
-
-import yaml
+import stable_baselines3
 import tensorflow as tf
+import yaml
+from stable_baselines3.common.utils import get_linear_fn, set_random_seed
+from tensorflow.python.platform import tf_logging as tf_log
 
 tf.get_logger().setLevel(tf_log.ERROR)
 gym.logger.set_level(gym.logger.ERROR)
 
 from stable_baselines import DQN, PPO2, SAC
 from stable_baselines.common import set_global_seeds
-from stable_baselines.common.callbacks import CheckpointCallback, EvalCallback, StopTrainingOnRewardThreshold
-from stable_baselines.common.noise import AdaptiveParamNoiseSpec, NormalActionNoise, OrnsteinUhlenbeckActionNoise
+from stable_baselines.common.callbacks import (CheckpointCallback,
+                                               EvalCallback,
+                                               StopTrainingOnRewardThreshold)
+from stable_baselines.common.noise import (AdaptiveParamNoiseSpec,
+                                           NormalActionNoise,
+                                           OrnsteinUhlenbeckActionNoise)
 from stable_baselines.common.schedules import constfn
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines.logger import configure
 
 from abstract_agent import AbstractAgent
 from algo.env_predicate_pair import EnvPredicatePair
-from custom_callbacks import LoggingTrainingMetricsCallback, SaveVecNormalizeCallback
-from custom_callbacks3 import LoggingTrainingMetricsCallback as LoggingTrainingMetricsCallbackSb3
-from custom_callbacks3 import SaveVecNormalizeCallback as SaveVecNormalizeCallbackSb3
-from env_utils import get_n_actions, get_reward_threshold, make_custom_env, make_env_parallel, normalize_env
+from custom_callbacks import (LoggingTrainingMetricsCallback,
+                              SaveVecNormalizeCallback)
+from custom_callbacks3 import \
+    LoggingTrainingMetricsCallback as LoggingTrainingMetricsCallbackSb3
+from custom_callbacks3 import \
+    SaveVecNormalizeCallback as SaveVecNormalizeCallbackSb3
+from env_utils import (get_n_actions, get_reward_threshold, make_custom_env,
+                       make_env_parallel, normalize_env)
 from envs.env_eval_callback import EnvEvalCallback
 from envs.env_variables import EnvVariables
 from evaluation import custom_evaluate_policy
 from log import Log
 from progress_bar_manager import ProgressBarManager
-from training.custom_sac import CustomSAC
 from training.custom_dqn import CustomDQN
-from utilities import LinearNormalActionNoise, linear_schedule, PREFIX_DIR_MODELS_SAVE, HOME
+from training.custom_sac import CustomSAC
+from utilities import (HOME, PREFIX_DIR_MODELS_SAVE, LinearNormalActionNoise,
+                       linear_schedule)
 
 if multiprocessing.cpu_count() <= 4:
     n_cpu_tf_sess = multiprocessing.cpu_count() // 2
@@ -70,7 +77,11 @@ def get_value_given_key(filename, key) -> str:
 def load_hyperparams(algo_name=None, env_name=None, model_suffix=None):
     # Load hyperparameters from yaml file
     abs_hyperparams_dir = os.path.abspath(HOME + "/hyperparams")
-    filename = abs_hyperparams_dir + "/{}.yml".format(algo_name) if not model_suffix else abs_hyperparams_dir + "/{}_{}.yml".format(algo_name, model_suffix)
+    filename = (
+        abs_hyperparams_dir + "/{}.yml".format(algo_name)
+        if not model_suffix
+        else abs_hyperparams_dir + "/{}_{}.yml".format(algo_name, model_suffix)
+    )
     with open(filename, "r") as f:
         hyperparams_dict = yaml.safe_load(f)
         if env_name in list(hyperparams_dict.keys()):
@@ -119,7 +130,7 @@ class Agent(AbstractAgent):
         save_replay_buffer: bool = True,
         save_model: bool = True,
         algo_hyperparams: str = None,
-        sb_version: str = 'sb2',
+        sb_version: str = "sb2",
         model_suffix: str = None,
     ):
 
@@ -145,19 +156,18 @@ class Agent(AbstractAgent):
         self.algo_hyperparams = algo_hyperparams
         self.model_suffix = model_suffix
         self.logger = Log("Agent")
-        assert sb_version == 'sb2' or sb_version == 'sb3', 'sb_version == sb2 or sb3: {}'.format(sb_version)
+        assert sb_version == "sb2" or sb_version == "sb3", "sb_version == sb2 or sb3: {}".format(sb_version)
         self.sb_version = sb_version
 
         filter_tf_version_warnings()
         self.logger.debug("Instantiating agent")
 
-        if algo_name == 'sac':
-            assert not discrete_action_space, 'discrete_action_space not supported in sac'
-        elif algo_name == 'dqn':
-            assert discrete_action_space, 'continues_action_space not supported in dqn'
-        elif algo_name == 'ppo2':
-            self.logger.warn('PPO with {} action space'
-                             .format('continuous' if not discrete_action_space else 'discrete'))
+        if algo_name == "sac":
+            assert not discrete_action_space, "discrete_action_space not supported in sac"
+        elif algo_name == "dqn":
+            assert discrete_action_space, "continues_action_space not supported in dqn"
+        elif algo_name == "ppo2":
+            self.logger.warn("PPO with {} action space".format("continuous" if not discrete_action_space else "discrete"))
 
     def _preprocess_hyperparams(self, _hyperparams):
         # Convert to python object if needed
@@ -230,38 +240,44 @@ class Agent(AbstractAgent):
                 n_timesteps = int(n_timesteps)
         else:
             if self.train_total_timesteps and self.train_total_timesteps != -1:
-                assert self.train_total_timesteps <= int(n_timesteps), 'train_total_timesteps <= n_timesteps: {}, {}'\
-                    .format(self.train_total_timesteps, n_timesteps)
+                assert self.train_total_timesteps <= int(n_timesteps), "train_total_timesteps <= n_timesteps: {}, {}".format(
+                    self.train_total_timesteps, n_timesteps
+                )
                 # priority to command line n_timesteps
                 self.logger.debug("priority to command line n_timesteps {}".format(self.train_total_timesteps))
                 n_timesteps = self.train_total_timesteps
             elif self.train_total_timesteps == -1:
-                assert n_timesteps, 'n_timesteps should have a value: {}'.format(n_timesteps)
+                assert n_timesteps, "n_timesteps should have a value: {}".format(n_timesteps)
                 n_timesteps = int(n_timesteps)
                 self.logger.info("training in continual learning = training from scratch. n_timesteps {}".format(n_timesteps))
             else:
-                assert n_timesteps, 'n_timesteps should have a value: {}'.format(n_timesteps)
+                assert n_timesteps, "n_timesteps should have a value: {}".format(n_timesteps)
                 n_timesteps = int(n_timesteps // 2)
-                self.logger.debug('train_total_timesteps not specified in continue_learning: '
-                                  'taking half of original n_timesteps defined in yml file {}'.format(n_timesteps))
+                self.logger.debug(
+                    "train_total_timesteps not specified in continue_learning: "
+                    "taking half of original n_timesteps defined in yml file {}".format(n_timesteps)
+                )
 
-        assert n_timesteps % log_every == 0, 'it should be possible to divide n_timesteps for log_every: {}, {}'\
-            .format(n_timesteps, log_every)
+        assert n_timesteps % log_every == 0, "it should be possible to divide n_timesteps for log_every: {}, {}".format(
+            n_timesteps, log_every
+        )
         return normalize_kwargs, n_envs, n_timesteps, log_every, _hyperparams
 
     def _preprocess_storage_dirs(self):
         if self.model_suffix:
-            best_model_save_path = PREFIX_DIR_MODELS_SAVE + '/' + self.algo_name + '/logs_' + self.tb_log_name + '_' + self.model_suffix
+            best_model_save_path = (
+                PREFIX_DIR_MODELS_SAVE + "/" + self.algo_name + "/logs_" + self.tb_log_name + "_" + self.model_suffix
+            )
         else:
-            best_model_save_path = PREFIX_DIR_MODELS_SAVE + '/' + self.algo_name + '/logs_' + self.tb_log_name
+            best_model_save_path = PREFIX_DIR_MODELS_SAVE + "/" + self.algo_name + "/logs_" + self.tb_log_name
         if self.log_to_tensorboard:
-            tensorboard_log_dir = PREFIX_DIR_MODELS_SAVE + '/' + self.algo_name + '/logs_' + self.tb_log_name
+            tensorboard_log_dir = PREFIX_DIR_MODELS_SAVE + "/" + self.algo_name + "/logs_" + self.tb_log_name
         else:
             tensorboard_log_dir = None
         return best_model_save_path, tensorboard_log_dir
 
     def _set_global_seed(self, seed):
-        if self.sb_version == 'sb3':
+        if self.sb_version == "sb3":
             set_random_seed(seed)
         else:
             set_global_seeds(seed)
@@ -288,7 +304,7 @@ class Agent(AbstractAgent):
         best_model_save_path, tensorboard_log_dir = self._preprocess_storage_dirs()
 
         if current_iteration != -1 and not self.continue_learning:
-            best_model_save_path = best_model_save_path + '_' + str(current_iteration)
+            best_model_save_path = best_model_save_path + "_" + str(current_iteration)
 
         self.logger.debug("best_model_save_path: {}".format(best_model_save_path))
 
@@ -305,7 +321,7 @@ class Agent(AbstractAgent):
         configure()
 
         if self.algo_hyperparams:
-            self.logger.debug('Overriding file specified hyperparams with {}'.format(eval(self.algo_hyperparams)))
+            self.logger.debug("Overriding file specified hyperparams with {}".format(eval(self.algo_hyperparams)))
             hyperparams = eval(self.algo_hyperparams)
         else:
             hyperparams = load_hyperparams(algo_name=self.algo_name, env_name=self.env_name, model_suffix=self.model_suffix)
@@ -333,9 +349,14 @@ class Agent(AbstractAgent):
                 ]
             )
             if len(normalize_kwargs) > 0:
-                env = normalize_env(env=env, vectorize=False, orig_log_dir=best_model_save_path,
-                                    continue_learning=self.continue_learning, sb_version=self.sb_version,
-                                    normalize_kwargs=normalize_kwargs)
+                env = normalize_env(
+                    env=env,
+                    vectorize=False,
+                    orig_log_dir=best_model_save_path,
+                    continue_learning=self.continue_learning,
+                    sb_version=self.sb_version,
+                    normalize_kwargs=normalize_kwargs,
+                )
         else:
             env = make_custom_env(
                 seed=seed,
@@ -455,9 +476,7 @@ class Agent(AbstractAgent):
                         )
                     else:
                         model.learn(
-                            total_timesteps=n_timesteps,
-                            callback=callback_list,
-                            tb_log_name=self.tb_log_name,
+                            total_timesteps=n_timesteps, callback=callback_list, tb_log_name=self.tb_log_name,
                         )
 
             else:
@@ -478,29 +497,29 @@ class Agent(AbstractAgent):
         finally:
             if len(normalize_kwargs) > 0 and not self.continue_learning:
                 # Important: save the running average, for testing the agent we need that normalization
-                model.get_vec_normalize_env().save(os.path.join(best_model_save_path, 'vecnormalize.pkl'))
+                model.get_vec_normalize_env().save(os.path.join(best_model_save_path, "vecnormalize.pkl"))
 
             # Release resources
             env.close()
 
     def _build_vec_normalize_callback(self, save_path: str, log_every: int):
 
-        if self.sb_version == 'sb2':
+        if self.sb_version == "sb2":
             return SaveVecNormalizeCallback(log_every=log_every, save_path=save_path)
         return SaveVecNormalizeCallbackSb3(log_every=log_every, save_path=save_path)
 
     def test_with_callback(self, seed, env_variables: EnvVariables, n_eval_episodes: int = None) -> EnvPredicatePair:
 
-        assert self.env_eval_callback, 'env_eval_callback should be instantiated'
+        assert self.env_eval_callback, "env_eval_callback should be instantiated"
 
         self._set_global_seed(seed=seed)
 
-        self.logger.debug('env_variables: {}'.format(env_variables.get_params_string()))
+        self.logger.debug("env_variables: {}".format(env_variables.get_params_string()))
 
         best_model_save_path, tensorboard_log_dir = self._preprocess_storage_dirs()
 
         if self.algo_hyperparams:
-            self.logger.debug('Overriding file specified hyperparams with {}'.format(eval(self.algo_hyperparams)))
+            self.logger.debug("Overriding file specified hyperparams with {}".format(eval(self.algo_hyperparams)))
             hyperparams = eval(self.algo_hyperparams)
         else:
             hyperparams = load_hyperparams(algo_name=self.algo_name, env_name=self.env_name)
@@ -536,8 +555,9 @@ class Agent(AbstractAgent):
         return EnvPredicatePair(env_variables=env_variables, predicate=adequate_performance, execution_info=info,)
 
     def test_without_callback(self, seed, n_eval_episodes: int = 0, model_path: str = None) -> Tuple[float, float]:
-        assert n_eval_episodes > 0 or self.n_eval_episodes > 0, 'n_eval_episodes > 0: {}, {}'\
-            .format(n_eval_episodes, self.n_eval_episodes)
+        assert n_eval_episodes > 0 or self.n_eval_episodes > 0, "n_eval_episodes > 0: {}, {}".format(
+            n_eval_episodes, self.n_eval_episodes
+        )
 
         self._set_global_seed(seed=seed)
 
@@ -549,7 +569,7 @@ class Agent(AbstractAgent):
             best_model_save_path = model_path
 
         if self.algo_hyperparams:
-            self.logger.debug('Overriding file specified hyperparams with {}'.format(eval(self.algo_hyperparams)))
+            self.logger.debug("Overriding file specified hyperparams with {}".format(eval(self.algo_hyperparams)))
             hyperparams = eval(self.algo_hyperparams)
         else:
             hyperparams = load_hyperparams(algo_name=self.algo_name, env_name=self.env_name)
@@ -579,11 +599,7 @@ class Agent(AbstractAgent):
         )
 
         mean_reward, std_reward = custom_evaluate_policy(
-            model,
-            eval_env,
-            n_eval_episodes=n_eval_episodes,
-            render=self.render,
-            deterministic=True,
+            model, eval_env, n_eval_episodes=n_eval_episodes, render=self.render, deterministic=True,
         )
 
         # release resources
@@ -593,7 +609,7 @@ class Agent(AbstractAgent):
 
     def test(self, seed, continue_learning_suffix: str = None, env_variables: EnvVariables = None):
 
-        assert self.n_eval_episodes > 0, 'n_eval_episodes > 0: {}'.format(self.n_eval_episodes)
+        assert self.n_eval_episodes > 0, "n_eval_episodes > 0: {}".format(self.n_eval_episodes)
 
         self._set_global_seed(seed=seed)
 
@@ -603,7 +619,7 @@ class Agent(AbstractAgent):
         best_model_save_path, tensorboard_log_dir = self._preprocess_storage_dirs()
 
         if self.algo_hyperparams:
-            self.logger.debug('Overriding file specified hyperparams with {}'.format(eval(self.algo_hyperparams)))
+            self.logger.debug("Overriding file specified hyperparams with {}".format(eval(self.algo_hyperparams)))
             hyperparams = eval(self.algo_hyperparams)
         else:
             hyperparams = load_hyperparams(algo_name=self.algo_name, env_name=self.env_name)
@@ -710,8 +726,8 @@ class Agent(AbstractAgent):
 
         if algo_name == "ppo2":
 
-            if self.sb_version == 'sb3':
-                raise NotImplementedError('PPO still in sb2')
+            if self.sb_version == "sb3":
+                raise NotImplementedError("PPO still in sb2")
 
             if best_model_save_path and continue_learning:
                 model = PPO2.load(
@@ -720,7 +736,7 @@ class Agent(AbstractAgent):
                     tensorboard_log=tensorboard_log_dir,
                     verbose=1,
                 )
-                key = 'cliprange'
+                key = "cliprange"
                 cl_cliprange_value = 0.08  # new policy can be a bit different than the old one
                 if key in old_hyperparams:
                     if isinstance(old_hyperparams[key], str):
@@ -746,7 +762,7 @@ class Agent(AbstractAgent):
             return PPO2(env=env, verbose=1, tensorboard_log=tensorboard_log_dir, **hyperparams, n_cpu_tf_sess=n_cpu_tf_sess,)
 
         elif algo_name == "sac":
-            if self.sb_version == 'sb3':
+            if self.sb_version == "sb3":
                 if best_model_save_path and continue_learning:
                     model = stable_baselines3.SAC.load(
                         self.load_model(best_model_save_path, model_to_load),
@@ -755,7 +771,7 @@ class Agent(AbstractAgent):
                         tensorboard_log=tensorboard_log_dir,
                         verbose=1,
                     )
-                    model.load_replay_buffer(path=best_model_save_path + '/replay_buffer')
+                    model.load_replay_buffer(path=best_model_save_path + "/replay_buffer")
                     self.logger.debug("Model replay buffer size: {}".format(model.replay_buffer.size()))
                     self.logger.debug("Setting learning_starts to 0")
                     model.learning_starts = 0
@@ -763,8 +779,8 @@ class Agent(AbstractAgent):
                     value = get_value_given_key(best_model_save_path + "/progress.csv", "ent_coef")
                     if value:
                         ent_coef = float(value)
-                        self.logger.debug("Restore model old ent_coef: {}".format('auto_' + str(ent_coef)))
-                        model.ent_coef = 'auto_' + str(ent_coef)
+                        self.logger.debug("Restore model old ent_coef: {}".format("auto_" + str(ent_coef)))
+                        model.ent_coef = "auto_" + str(ent_coef)
                         model.target_entropy = str(ent_coef)
 
                     return model
@@ -777,7 +793,7 @@ class Agent(AbstractAgent):
                         verbose=1,
                         n_cpu_tf_sess=n_cpu_tf_sess,
                     )
-                assert n_timesteps > 0, 'n_timesteps > 0: {}'.format(n_timesteps)
+                assert n_timesteps > 0, "n_timesteps > 0: {}".format(n_timesteps)
                 return stable_baselines3.SAC(env=env, verbose=0, seed=seed, tensorboard_log=tensorboard_log_dir, **hyperparams)
 
             else:
@@ -798,8 +814,8 @@ class Agent(AbstractAgent):
                     value = get_value_given_key(best_model_save_path + "/progress.csv", "ent_coef")
                     if value:
                         ent_coef = float(value)
-                        self.logger.debug("Restore model old ent_coef: {}".format('auto_' + str(ent_coef)))
-                        model.ent_coef = 'auto_' + str(ent_coef)
+                        self.logger.debug("Restore model old ent_coef: {}".format("auto_" + str(ent_coef)))
+                        model.ent_coef = "auto_" + str(ent_coef)
                         model.target_entropy = str(ent_coef)
 
                     return model
@@ -814,13 +830,18 @@ class Agent(AbstractAgent):
                         n_cpu_tf_sess=n_cpu_tf_sess,
                     )
                 return CustomSAC(
-                    total_timesteps=n_timesteps, env=env, verbose=1, tensorboard_log=tensorboard_log_dir, **hyperparams,
-                    n_cpu_tf_sess=n_cpu_tf_sess, save_replay_buffer=save_replay_buffer
+                    total_timesteps=n_timesteps,
+                    env=env,
+                    verbose=1,
+                    tensorboard_log=tensorboard_log_dir,
+                    **hyperparams,
+                    n_cpu_tf_sess=n_cpu_tf_sess,
+                    save_replay_buffer=save_replay_buffer,
                 )
 
         elif algo_name == "dqn":
 
-            if self.sb_version == 'sb3':
+            if self.sb_version == "sb3":
 
                 if best_model_save_path:
                     if continue_learning:
@@ -831,7 +852,7 @@ class Agent(AbstractAgent):
                             tensorboard_log=tensorboard_log_dir,
                             verbose=0,
                         )
-                        model.load_replay_buffer(path=best_model_save_path + '/replay_buffer')
+                        model.load_replay_buffer(path=best_model_save_path + "/replay_buffer")
                         model.learning_starts = 0
                         model.exploration_fraction = 0.0005
                         model.exploration_initial_eps = model.exploration_final_eps
@@ -848,10 +869,9 @@ class Agent(AbstractAgent):
                         env=env,
                         seed=seed,
                         tensorboard_log=tensorboard_log_dir,
-                        verbose=1
+                        verbose=1,
                     )
-                return stable_baselines3.DQN(env=env, verbose=0, seed=seed,
-                                             tensorboard_log=tensorboard_log_dir, **hyperparams)
+                return stable_baselines3.DQN(env=env, verbose=0, seed=seed, tensorboard_log=tensorboard_log_dir, **hyperparams)
             else:
                 if best_model_save_path:
                     if continue_learning:
@@ -881,10 +901,14 @@ class Agent(AbstractAgent):
                         n_cpu_tf_sess=n_cpu_tf_sess,
                     )
                 return CustomDQN(
-                    env=env, save_replay_buffer=save_replay_buffer,
-                    verbose=1, tensorboard_log=tensorboard_log_dir, **hyperparams, n_cpu_tf_sess=n_cpu_tf_sess,
+                    env=env,
+                    save_replay_buffer=save_replay_buffer,
+                    verbose=1,
+                    tensorboard_log=tensorboard_log_dir,
+                    **hyperparams,
+                    n_cpu_tf_sess=n_cpu_tf_sess,
                 )
-        raise NotImplementedError('algo_name {} not supported yet'.format(algo_name))
+        raise NotImplementedError("algo_name {} not supported yet".format(algo_name))
 
     def build_checkpoint_callback(self, save_freq=10000, save_path=None):
         self.logger.debug("Checkpoint callback called every {} timesteps".format(save_freq))
@@ -892,7 +916,7 @@ class Agent(AbstractAgent):
 
     def build_logging_training_metrics_callback(
         self,
-        algo_name='ppo2',
+        algo_name="ppo2",
         env_name=None,
         log_every=1000,
         save_path=None,
@@ -906,10 +930,10 @@ class Agent(AbstractAgent):
         continue_learning=False,
         save_replay_buffer=True,
         save_model=True,
-        random_search=False
+        random_search=False,
     ):
         self.logger.debug("Logging training metrics callback called every {}".format(log_every))
-        if self.sb_version == 'sb3':
+        if self.sb_version == "sb3":
             return LoggingTrainingMetricsCallbackSb3(
                 log_every=log_every,
                 log_dir=save_path,
@@ -924,7 +948,7 @@ class Agent(AbstractAgent):
                 continue_learning=continue_learning,
                 save_replay_buffer=save_replay_buffer,
                 save_model=save_model,
-                random_search=random_search
+                random_search=random_search,
             )
         return LoggingTrainingMetricsCallback(
             log_every=log_every,
@@ -939,7 +963,7 @@ class Agent(AbstractAgent):
             env_eval_callback=env_eval_callback,
             continue_learning=continue_learning,
             save_model=save_model,
-            random_search=random_search
+            random_search=random_search,
         )
 
     def build_eval_callback(
@@ -966,7 +990,7 @@ class Agent(AbstractAgent):
 
     def build_callback(
         self,
-        algo_name='ppo2',
+        algo_name="ppo2",
         continue_learning=False,
         call_every=1000,
         eval_callback=False,
@@ -1015,9 +1039,14 @@ class Agent(AbstractAgent):
                     continue_learning=continue_learning,
                     save_replay_buffer=save_replay_buffer,
                     save_model=save_model,
-                    random_search=random_search
+                    random_search=random_search,
                 )
             return self.build_logging_training_metrics_callback(
-                algo_name=algo_name, env_name=env_name, log_every=call_every, save_path=save_path, num_envs=num_envs,
-                save_replay_buffer=save_replay_buffer, save_model=save_model
+                algo_name=algo_name,
+                env_name=env_name,
+                log_every=call_every,
+                save_path=save_path,
+                num_envs=num_envs,
+                save_replay_buffer=save_replay_buffer,
+                save_model=save_model,
             )

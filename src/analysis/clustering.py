@@ -1,12 +1,14 @@
 from typing import Tuple
+
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
+
 from log import Log
 
 
 def cluster_data(data, n_clusters_interval: Tuple) -> Tuple:
-    logger = Log('cluster_data')
+    logger = Log("cluster_data")
     optimal_n_clusters = 1
     optimal_score = -1
     if n_clusters_interval[0] != 1:
@@ -25,8 +27,8 @@ def cluster_data(data, n_clusters_interval: Tuple) -> Tuple:
             except ValueError:
                 break
 
-        assert optimal_n_clusters != -1, 'Error in silhouette analysis'
-        logger.debug('Best score is {} for n_cluster = {}'.format(optimal_score, optimal_n_clusters))
+        assert optimal_n_clusters != -1, "Error in silhouette analysis"
+        logger.debug("Best score is {} for n_cluster = {}".format(optimal_score, optimal_n_clusters))
 
     clusterer = KMeans(n_clusters=optimal_n_clusters).fit(data)
     labels = clusterer.labels_

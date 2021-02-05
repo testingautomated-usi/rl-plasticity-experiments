@@ -1,46 +1,46 @@
 import argparse
+import datetime
+import glob
 import os
+import time
+
 import numpy as np
 
 from agent import Agent
 from agent_stub import AgentStub
 from algo.alphatest import AlphaTest
 from algo.random_search import RandomSearch
-from env_utils import instantiate_env_variables, instantiate_eval_callback, standardize_env_name
+from env_utils import (instantiate_env_variables, instantiate_eval_callback,
+                       standardize_env_name)
 from log import Log
-from utilities import check_file_existence, SUPPORTED_ENVS, SUPPORTED_ALGOS, check_param_names, \
-    get_result_file_iteration_number
-
-import datetime
-import glob
-
-import time
+from utilities import (SUPPORTED_ALGOS, SUPPORTED_ENVS, check_file_existence,
+                       check_param_names, get_result_file_iteration_number)
 
 if __name__ == "__main__":
 
-    logger = Log('experiments')
+    logger = Log("experiments")
     parser = argparse.ArgumentParser()
     parser.add_argument("--algo_name", choices=SUPPORTED_ALGOS, required=True, default="ppo2")
     parser.add_argument("--env_name", choices=SUPPORTED_ENVS, type=str, required=True, default="CartPole-v1")
-    parser.add_argument('--search_guidance', action='store_false', default=True)
+    parser.add_argument("--search_guidance", action="store_false", default=True)
     parser.add_argument("--param_names", type=check_param_names, default=None)
-    parser.add_argument('--num_iterations', type=int, default=5)
+    parser.add_argument("--num_iterations", type=int, default=5)
     parser.add_argument("--runs_for_probability_estimation", type=int, default=3)
-    parser.add_argument("--continue_learning_suffix", type=str, default='cl_search')
+    parser.add_argument("--continue_learning_suffix", type=str, default="cl_search")
     parser.add_argument("--num_search_iterations", type=int, default=1)
     parser.add_argument("--stub_agent", type=bool, default=False)
     parser.add_argument("--buffer_file", type=check_file_existence, default=None)
     parser.add_argument("--archive_file", type=check_file_existence, default=None)
     parser.add_argument("--executions_skipped_file", type=check_file_existence, default=None)
-    parser.add_argument("--search_type", choices=['alphatest', 'random'], default='alphatest')
+    parser.add_argument("--search_type", choices=["alphatest", "random"], default="alphatest")
     parser.add_argument("--stop_at_min_max_num_iterations", type=bool, default=False)
     parser.add_argument("--parallelize_search", type=bool, default=False)
     parser.add_argument("--monitor_search_every", type=int, default=-1)
-    parser.add_argument("--full_training_time", action='store_true')
+    parser.add_argument("--full_training_time", action="store_true")
     parser.add_argument("--binary_search_epsilon", type=float, default=0.05)
     parser.add_argument("--stop_at_first_iteration", type=bool, default=False)
     parser.add_argument("--model_suffix", type=str, default=None)
-    parser.add_argument("--resample", action='store_true', default=False)
+    parser.add_argument("--resample", action="store_true", default=False)
     parser.add_argument("--dir_experiments", type=check_file_existence, default=None)
     parser.add_argument("--exp_suffix", type=str, default=None)
     parser.add_argument("--max_runtime_h", type=int, default=48)
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         args.binary_search_guidance = False
     args.eval_callback = False
     args.show_progress_bar = False
-    args.model_to_load = 'best_model_eval'
+    args.model_to_load = "best_model_eval"
     args.num_envs = 1
     args.render = False
     args.train_total_timesteps = None
@@ -72,19 +72,19 @@ if __name__ == "__main__":
     args.save_model = True
     args.save_replay_buffer = False
 
-    if args.algo_name == 'dqn':
+    if args.algo_name == "dqn":
         args.discrete_action_space = True
-    elif args.algo_name == 'sac':
+    elif args.algo_name == "sac":
         args.discrete_action_space = False
 
     # if args.env_name == 'CartPole-v1':
-    if args.algo_name == 'ppo2' or args.algo_name == 'dqn':
+    if args.algo_name == "ppo2" or args.algo_name == "dqn":
         args.discrete_action_space = True
         args.log_every = 10000
-        args.sb_version = 'sb2'
-    elif args.algo_name == 'sac':
+        args.sb_version = "sb2"
+    elif args.algo_name == "sac":
         args.log_every = 5000
-        args.sb_version = 'sb2'
+        args.sb_version = "sb2"
 
     env_variables = instantiate_env_variables(
         algo_name=args.algo_name,
@@ -137,8 +137,11 @@ if __name__ == "__main__":
     counter = 0
 
     if args.resample and args.dir_experiments:
-        experiment_dirs_pattern = "n_iterations_{}_*".format('_'.join(param_names)) if not args.model_suffix \
-            else "n_iterations_{}_{}_*".format(args.model_suffix, '_'.join(param_names))
+        experiment_dirs_pattern = (
+            "n_iterations_{}_*".format("_".join(param_names))
+            if not args.model_suffix
+            else "n_iterations_{}_{}_*".format(args.model_suffix, "_".join(param_names))
+        )
         list_of_dir_experiments = glob.glob(os.path.join(args.dir_experiments, experiment_dirs_pattern))
         for dir_experiment in list_of_dir_experiments:
             dir_experiment = os.path.join(args.dir_experiments, dir_experiment)
@@ -148,7 +151,7 @@ if __name__ == "__main__":
             last_archive_file = max(list_of_archive_files, key=get_result_file_iteration_number)
             list_of_executions_skipped_files = glob.glob(os.path.join(dir_experiment, "executions_skipped_*.txt"))
             last_executions_skipped_file = max(list_of_executions_skipped_files, key=get_result_file_iteration_number)
-            logger.info('########### Resampling dir {} ###########'.format(dir_experiment))
+            logger.info("########### Resampling dir {} ###########".format(dir_experiment))
             alphatest = AlphaTest(
                 num_iterations=args.num_iterations,
                 env_variables=env_variables,
@@ -184,17 +187,20 @@ if __name__ == "__main__":
                 hours_elapsed_mean = np.asarray(times_elapsed).mean() / 3600
                 hours_elapsed_sum = np.asarray(times_elapsed).sum() / 3600
                 search_iterations_left = args.num_search_iterations - i + 1
-                logger.info('Hours elapsed: {}h. Iterations left: {}'.format(hours_elapsed_sum, search_iterations_left))
+                logger.info("Hours elapsed: {}h. Iterations left: {}".format(hours_elapsed_sum, search_iterations_left))
                 if hours_elapsed_sum + hours_elapsed_mean > args.max_runtime_h:
-                    logger.info('########### Stop experiments at iteration {} since it is unlikely '
-                                'that the next iteration will complete within the runtime {}h. '
-                                'Mean runtime: {}h, Time elapsed: {}h ###########'.format(
-                                    i, args.max_runtime_h, hours_elapsed_mean, hours_elapsed_sum))
+                    logger.info(
+                        "########### Stop experiments at iteration {} since it is unlikely "
+                        "that the next iteration will complete within the runtime {}h. "
+                        "Mean runtime: {}h, Time elapsed: {}h ###########".format(
+                            i, args.max_runtime_h, hours_elapsed_mean, hours_elapsed_sum
+                        )
+                    )
                     break
-            logger.info('########### Start repetition num {} ###########'.format(i))
+            logger.info("########### Start repetition num {} ###########".format(i))
             if args.monitor_search_every != -1:
                 counter = i
-            if args.search_type == 'alphatest':
+            if args.search_type == "alphatest":
                 alphatest = AlphaTest(
                     num_iterations=args.num_iterations,
                     env_variables=env_variables,
@@ -223,7 +229,7 @@ if __name__ == "__main__":
                     exp_suffix=args.exp_suffix,
                 )
                 alphatest.search()
-            elif args.search_type == 'random':
+            elif args.search_type == "random":
                 random_search = RandomSearch(
                     env_variables=env_variables,
                     agent=agent,
@@ -246,6 +252,9 @@ if __name__ == "__main__":
                     exp_suffix=args.exp_suffix,
                 )
                 random_search.search()
-            logger.info('########### End repetition num {}. Time elapsed: {} ###########'
-                        .format(i, str(datetime.timedelta(seconds=(time.time() - start_search_time)))))
+            logger.info(
+                "########### End repetition num {}. Time elapsed: {} ###########".format(
+                    i, str(datetime.timedelta(seconds=(time.time() - start_search_time)))
+                )
+            )
             times_elapsed.append(time.time() - start_search_time)

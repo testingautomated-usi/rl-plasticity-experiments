@@ -4,21 +4,23 @@ copied from openai gym and adapted
 
 import math
 
-import numpy as np
-
 import gym
+import numpy as np
 from gym import spaces
 from gym.utils import seeding
 
 
 class MountainCarEnvWrapper(gym.Env):
-    metadata = {
-        'render.modes': ['human', 'rgb_array'],
-        'video.frames_per_second': 30
-    }
+    metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 30}
 
-    def __init__(self, goal_velocity: float = 0.0, gravity: float = 0.0025, force: float = 0.001, manual: bool = False,
-                 discrete_action_space: bool = True):
+    def __init__(
+        self,
+        goal_velocity: float = 0.0,
+        gravity: float = 0.0025,
+        force: float = 0.001,
+        manual: bool = False,
+        discrete_action_space: bool = True,
+    ):
         # cannot be changed since these params are part of the observation space
         self.min_position = -1.2
         self.max_position = 0.6
@@ -48,8 +50,7 @@ class MountainCarEnvWrapper(gym.Env):
         if self.discrete_action_space or manual:
             self.action_space = spaces.Discrete(3)
         else:
-            self.action_space = spaces.Box(low=self.min_action, high=self.max_action,
-                                           shape=(1,), dtype=np.float32)
+            self.action_space = spaces.Box(low=self.min_action, high=self.max_action, shape=(1,), dtype=np.float32)
 
         self.observation_space = spaces.Box(self.low, self.high, dtype=np.float32)
 
@@ -98,9 +99,9 @@ class MountainCarEnvWrapper(gym.Env):
         return np.array(self.state)
 
     def _height(self, xs):
-        return np.sin(3 * xs) * .45 + .55
+        return np.sin(3 * xs) * 0.45 + 0.55
 
-    def render(self, mode='human'):
+    def render(self, mode="human"):
         screen_width = 600
         screen_height = 400
 
@@ -111,6 +112,7 @@ class MountainCarEnvWrapper(gym.Env):
 
         if self.viewer is None:
             from gym.envs.classic_control import rendering
+
             self.viewer = rendering.Viewer(screen_width, screen_height)
             xs = np.linspace(self.min_position, self.max_position, 100)
             ys = self._height(xs)
@@ -129,14 +131,14 @@ class MountainCarEnvWrapper(gym.Env):
             car.add_attr(self.cartrans)
             self.viewer.add_geom(car)
             frontwheel = rendering.make_circle(carheight / 2.5)
-            frontwheel.set_color(.5, .5, .5)
+            frontwheel.set_color(0.5, 0.5, 0.5)
             frontwheel.add_attr(rendering.Transform(translation=(carwidth / 4, clearance)))
             frontwheel.add_attr(self.cartrans)
             self.viewer.add_geom(frontwheel)
             backwheel = rendering.make_circle(carheight / 2.5)
             backwheel.add_attr(rendering.Transform(translation=(-carwidth / 4, clearance)))
             backwheel.add_attr(self.cartrans)
-            backwheel.set_color(.5, .5, .5)
+            backwheel.set_color(0.5, 0.5, 0.5)
             self.viewer.add_geom(backwheel)
             flagx = (self.goal_position - self.min_position) * scale
             flagy1 = self._height(self.goal_position) * scale
@@ -144,14 +146,14 @@ class MountainCarEnvWrapper(gym.Env):
             flagpole = rendering.Line((flagx, flagy1), (flagx, flagy2))
             self.viewer.add_geom(flagpole)
             flag = rendering.FilledPolygon([(flagx, flagy2), (flagx, flagy2 - 10), (flagx + 25, flagy2 - 5)])
-            flag.set_color(.8, .8, 0)
+            flag.set_color(0.8, 0.8, 0)
             self.viewer.add_geom(flag)
 
         pos = self.state[0]
         self.cartrans.set_translation((pos - self.min_position) * scale, self._height(pos) * scale)
         self.cartrans.set_rotation(math.cos(3 * pos))
 
-        return self.viewer.render(return_rgb_array=mode == 'rgb_array')
+        return self.viewer.render(return_rgb_array=mode == "rgb_array")
 
     def get_keys_to_action(self):
         return {(): 1, (276,): 0, (275,): 2, (275, 276): 1}  # control with left and right arrow keys
@@ -162,12 +164,14 @@ class MountainCarEnvWrapper(gym.Env):
             self.viewer = None
 
     def __str__(self) -> str:
-        return '(force: {}, gravity: {}, goal_velocity: {}, discrete_action_space: {})'\
-            .format(self.force, self.gravity, self.goal_velocity, self.discrete_action_space)
+        return "(force: {}, gravity: {}, goal_velocity: {}, discrete_action_space: {})".format(
+            self.force, self.gravity, self.goal_velocity, self.discrete_action_space
+        )
 
 
 if __name__ == "__main__":
     import time
+
     import gym
 
     # original
@@ -180,14 +184,15 @@ if __name__ == "__main__":
     human_wants_restart = False
     human_sets_pause = False
 
-
     def key_press(key, mod):
         global human_agent_action, human_wants_restart, human_sets_pause
         # enter
-        if key == 0xff0d: human_wants_restart = True
+        if key == 0xFF0D:
+            human_wants_restart = True
         # backspace
-        if key == 32: human_sets_pause = not human_sets_pause
-        a = int(key - ord('0'))
+        if key == 32:
+            human_sets_pause = not human_sets_pause
+        a = int(key - ord("0"))
         # left
         if a == 65313:
             human_agent_action = 1
@@ -197,22 +202,19 @@ if __name__ == "__main__":
         else:
             return
 
-
     def key_release(key, mod):
         global human_agent_action
-        a = int(key - ord('0'))
+        a = int(key - ord("0"))
         if a == 65313 or a == 65315:
             # do nothing
             human_agent_action = 0
         else:
             return
 
-
     env.reset()
     env.render()
     env.unwrapped.viewer.window.on_key_press = key_press
     env.unwrapped.viewer.window.on_key_release = key_release
-
 
     def rollout(env):
         global human_agent_action, human_wants_restart, human_sets_pause
@@ -235,16 +237,19 @@ if __name__ == "__main__":
             #     print("reward %0.3f" % r)
             total_reward += r
             window_still_open = env.render()
-            if window_still_open == False: return False
-            if done: break
-            if human_wants_restart: break
+            if window_still_open == False:
+                return False
+            if done:
+                break
+            if human_wants_restart:
+                break
             while human_sets_pause:
                 env.render()
                 time.sleep(0.1)
             time.sleep(0.1)
         print("timesteps %i reward %0.2f" % (total_timesteps, total_reward))
 
-
     while 1:
         window_still_open = rollout(env)
-        if window_still_open == False: break
+        if window_still_open == False:
+            break

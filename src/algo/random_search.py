@@ -1,18 +1,23 @@
 import copy
 import datetime
 import glob
-import numpy as np
+import math
 import multiprocessing
 import os
 import shutil
 import time
-import math
 from queue import Queue
 
+import numpy as np
+
 from abstract_agent import AbstractAgent
-from algo.archive import Archive, read_saved_archive, is_frontier_pair, compute_dist, compute_inverse_dist_random_search
-from algo.env_predicate_pair import BufferEnvPredicatePairs, read_saved_buffer, EnvPredicatePair
-from algo.search_utils import BufferExecutionsSkipped, read_saved_buffer_executions_skipped, ExecutionSkipped
+from algo.archive import (Archive, compute_dist,
+                          compute_inverse_dist_random_search, is_frontier_pair,
+                          read_saved_archive)
+from algo.env_predicate_pair import (BufferEnvPredicatePairs, EnvPredicatePair,
+                                     read_saved_buffer)
+from algo.search_utils import (BufferExecutionsSkipped, ExecutionSkipped,
+                               read_saved_buffer_executions_skipped)
 from algo.time_elapsed_util import save_time_elapsed
 from env_utils import instantiate_env_variables, standardize_env_name
 from envs.env_variables import EnvVariables
@@ -20,7 +25,8 @@ from execution.iterations_worker import IterationsWorker
 from execution.runner import Runner
 from log import Log
 from send_email import MonitorProgress
-from utilities import PREFIX_DIR_MODELS_SAVE, HOME, get_result_file_iteration_number, NUM_OF_THREADS, norm
+from utilities import (HOME, NUM_OF_THREADS, PREFIX_DIR_MODELS_SAVE,
+                       get_result_file_iteration_number, norm)
 
 
 class RandomSearch:
@@ -46,9 +52,9 @@ class RandomSearch:
         stop_at_first_iteration: bool = False,
         exp_suffix: str = None,
     ):
-        assert agent, 'agent should have a value: {}'.format(agent)
-        assert algo_name, 'algo_name should have a value: {}'.format(algo_name)
-        assert env_name, 'env_name should have a value: {}'.format(env_name)
+        assert agent, "agent should have a value: {}".format(agent)
+        assert algo_name, "algo_name should have a value: {}".format(algo_name)
+        assert env_name, "env_name should have a value: {}".format(env_name)
 
         self.agent = agent
         self.num_iterations = num_iterations
@@ -66,16 +72,16 @@ class RandomSearch:
         self.exp_suffix = exp_suffix
 
         if param_names:
-            self.param_names_string = '_'.join(param_names)
+            self.param_names_string = "_".join(param_names)
 
         # TODO: refactor buffer restoring in abstract class extended by search algo
         #  (for now only random search and alphatest)
         if buffer_file:
             previously_saved_buffer = read_saved_buffer(buffer_file=buffer_file)
-            index_last_slash = buffer_file.rindex('/')
+            index_last_slash = buffer_file.rindex("/")
 
             self.algo_save_dir = buffer_file[:index_last_slash]
-            self.logger.debug('Algo save dir from restored execution: {}'.format(self.algo_save_dir))
+            self.logger.debug("Algo save dir from restored execution: {}".format(self.algo_save_dir))
             self.buffer_env_predicate_pairs = BufferEnvPredicatePairs(save_dir=self.algo_save_dir)
             self.archive = Archive(save_dir=self.algo_save_dir, epsilon=binary_search_epsilon)
 
@@ -83,28 +89,31 @@ class RandomSearch:
             for buffer_item in previously_saved_buffer:
                 previous_env_variables = instantiate_env_variables(
                     algo_name=algo_name,
-                    discrete_action_space=self.all_params['discrete_action_space'],
+                    discrete_action_space=self.all_params["discrete_action_space"],
                     env_name=env_name,
                     param_names=param_names,
-                    env_values=buffer_item.get_env_values()
+                    env_values=buffer_item.get_env_values(),
                 )
-                self.buffer_env_predicate_pairs.append(EnvPredicatePair(
-                    env_variables=previous_env_variables,
-                    pass_probability=buffer_item.get_pass_probability(),
-                    predicate=buffer_item.is_predicate(),
-                    regression_probability=buffer_item.get_regression_probability(),
-                    probability_estimation_runs=buffer_item.get_probability_estimation_runs(),
-                    regression_estimation_runs=buffer_item.get_regression_estimation_runs(),
-                    model_dirs=buffer_item.get_model_dirs()
-                ))
-            assert archive_file, 'when buffer file is available so needs to be the archive file to ' \
-                                 'restore a previous execution'
+                self.buffer_env_predicate_pairs.append(
+                    EnvPredicatePair(
+                        env_variables=previous_env_variables,
+                        pass_probability=buffer_item.get_pass_probability(),
+                        predicate=buffer_item.is_predicate(),
+                        regression_probability=buffer_item.get_regression_probability(),
+                        probability_estimation_runs=buffer_item.get_probability_estimation_runs(),
+                        regression_estimation_runs=buffer_item.get_regression_estimation_runs(),
+                        model_dirs=buffer_item.get_model_dirs(),
+                    )
+                )
+            assert archive_file, (
+                "when buffer file is available so needs to be the archive file to " "restore a previous execution"
+            )
             try:
                 previous_num_iterations_buffer = get_result_file_iteration_number(filename=buffer_file)
                 previous_num_iterations_archive = get_result_file_iteration_number(filename=archive_file)
-                assert previous_num_iterations_buffer == previous_num_iterations_archive, \
-                    'The two nums must coincide: {}, {}'.format(previous_num_iterations_buffer,
-                                                                previous_num_iterations_archive)
+                assert (
+                    previous_num_iterations_buffer == previous_num_iterations_archive
+                ), "The two nums must coincide: {}, {}".format(previous_num_iterations_buffer, previous_num_iterations_archive)
                 previous_num_iterations = previous_num_iterations_buffer + 1
             except ValueError as e:
                 raise ValueError(e)
@@ -120,10 +129,10 @@ class RandomSearch:
                 all_params = env_variables.instantiate_env()
                 previous_env_variables = instantiate_env_variables(
                     algo_name=algo_name,
-                    discrete_action_space=all_params['discrete_action_space'],
+                    discrete_action_space=all_params["discrete_action_space"],
                     env_name=env_name,
                     param_names=param_names,
-                    env_values=env_values
+                    env_values=env_values,
                 )
                 if predicate:
                     t_env_variables = previous_env_variables
@@ -137,34 +146,35 @@ class RandomSearch:
 
                 # restore executions skipped
                 previously_saved_executions_skipped = read_saved_buffer_executions_skipped(
-                    buffer_executions_skipped_file=executions_skipped_file)
+                    buffer_executions_skipped_file=executions_skipped_file
+                )
                 for buffer_executions_skipped_item in previously_saved_executions_skipped:
                     previous_env_variables_skipped = instantiate_env_variables(
                         algo_name=algo_name,
-                        discrete_action_space=self.all_params['discrete_action_space'],
+                        discrete_action_space=self.all_params["discrete_action_space"],
                         env_name=env_name,
                         param_names=param_names,
-                        env_values=buffer_executions_skipped_item.env_values_skipped
+                        env_values=buffer_executions_skipped_item.env_values_skipped,
                     )
                     env_predicate_pair_skipped = EnvPredicatePair(
-                        env_variables=previous_env_variables_skipped,
-                        predicate=buffer_executions_skipped_item.predicate
+                        env_variables=previous_env_variables_skipped, predicate=buffer_executions_skipped_item.predicate
                     )
                     previous_env_variables_executed = instantiate_env_variables(
                         algo_name=algo_name,
-                        discrete_action_space=self.all_params['discrete_action_space'],
+                        discrete_action_space=self.all_params["discrete_action_space"],
                         env_name=env_name,
                         param_names=param_names,
-                        env_values=buffer_executions_skipped_item.env_values_executed
+                        env_values=buffer_executions_skipped_item.env_values_executed,
                     )
                     env_predicate_pair_executed = EnvPredicatePair(
-                        env_variables=previous_env_variables_executed,
-                        predicate=buffer_executions_skipped_item.predicate
+                        env_variables=previous_env_variables_executed, predicate=buffer_executions_skipped_item.predicate
                     )
                     self.buffer_executions_skipped.append(
-                        ExecutionSkipped(env_predicate_pair_skipped=env_predicate_pair_skipped,
-                                         env_predicate_pair_executed=env_predicate_pair_executed,
-                                         search_component=buffer_executions_skipped_item.search_component)
+                        ExecutionSkipped(
+                            env_predicate_pair_skipped=env_predicate_pair_skipped,
+                            env_predicate_pair_executed=env_predicate_pair_executed,
+                            search_component=buffer_executions_skipped_item.search_component,
+                        )
                     )
         else:
             attempt = 0
@@ -186,8 +196,11 @@ class RandomSearch:
             self.buffer_env_predicate_pairs = BufferEnvPredicatePairs(save_dir=self.algo_save_dir)
             # assuming initial env_variables satisfies the predicate of adequate performance
             if self.runs_for_probability_estimation:
-                env_predicate_pair = EnvPredicatePair(env_variables=self.init_env_variables, predicate=True,
-                                                      probability_estimation_runs=[True] * self.runs_for_probability_estimation)
+                env_predicate_pair = EnvPredicatePair(
+                    env_variables=self.init_env_variables,
+                    predicate=True,
+                    probability_estimation_runs=[True] * self.runs_for_probability_estimation,
+                )
             else:
                 env_predicate_pair = EnvPredicatePair(env_variables=self.init_env_variables, predicate=True)
             self.buffer_env_predicate_pairs.append(env_predicate_pair)
@@ -200,7 +213,7 @@ class RandomSearch:
         self.continue_learning_suffix = continue_learning_suffix
         self.binary_search_epsilon = binary_search_epsilon
 
-        self.runner = Runner(agent=self.agent, runs_for_probability_estimation=self.runs_for_probability_estimation, )
+        self.runner = Runner(agent=self.agent, runs_for_probability_estimation=self.runs_for_probability_estimation,)
 
         self.monitor_search_every = monitor_search_every
         self.monitor_progress = None
@@ -210,21 +223,24 @@ class RandomSearch:
                 env_name=standardize_env_name(env_name=self.env_name),
                 results_dir=self.algo_save_dir,
                 param_names_string=self.param_names_string,
-                search_type='random',
+                search_type="random",
                 start_search_time=start_search_time,
-                starting_progress_report_number=starting_progress_report_number
+                starting_progress_report_number=starting_progress_report_number,
             )
 
     def search(self) -> Archive:
 
-        self.logger.info('Num of cpu threads: {}'.format(multiprocessing.cpu_count()))
+        self.logger.info("Num of cpu threads: {}".format(multiprocessing.cpu_count()))
 
         # assumes training with default params is already done
         self.logger.debug("Original env: {}".format(self.init_env_variables.get_params_string()))
         self.logger.debug("\n")
 
-        range_fn = range(0, self.num_iterations) if not self.previous_num_iterations \
+        range_fn = (
+            range(0, self.num_iterations)
+            if not self.previous_num_iterations
             else range(self.previous_num_iterations, self.num_iterations)
+        )
 
         start_search_time = time.time()
 
@@ -249,14 +265,15 @@ class RandomSearch:
             while True:
                 current_env_variables = copy.deepcopy(self.init_env_variables)
                 current_env_variables.mutate_params_randomly()
-                if not self.buffer_env_predicate_pairs.is_already_evaluated(
-                        candidate_env_variables=current_env_variables
-                ) or max_attempts == 0:
+                if (
+                    not self.buffer_env_predicate_pairs.is_already_evaluated(candidate_env_variables=current_env_variables)
+                    or max_attempts == 0
+                ):
                     break
                 max_attempts -= 1
 
             if max_attempts == 0:
-                raise OverflowError('Max attempts threshold reached')
+                raise OverflowError("Max attempts threshold reached")
 
             # TODO: refactor
             # dominance analysis
@@ -267,40 +284,47 @@ class RandomSearch:
                 candidate_env_variables=current_env_variables, predicate_to_consider=False
             )
             if executed_env_dominate_false:
-                assert executed_env_dominate_true is None, 'it can\'t be that env {} dominates False env {} and is dominated by True env {}'.format(
+                assert (
+                    executed_env_dominate_true is None
+                ), "it can't be that env {} dominates False env {} and is dominated by True env {}".format(
                     current_env_variables.get_params_string(),
                     executed_env_dominate_false.get_env_variables().get_params_string(),
-                    executed_env_dominate_true.get_env_variables().get_params_string()
+                    executed_env_dominate_true.get_env_variables().get_params_string(),
                 )
                 self.logger.debug(
-                    'dominance analysis: env {} not executed because dominates False env {}'.format(
+                    "dominance analysis: env {} not executed because dominates False env {}".format(
                         current_env_variables.get_params_string(),
-                        executed_env_dominate_false.get_env_variables().get_params_string())
+                        executed_env_dominate_false.get_env_variables().get_params_string(),
+                    )
                 )
                 env_predicate_pair = EnvPredicatePair(
                     env_variables=current_env_variables,
                     probability_estimation_runs=executed_env_dominate_false.get_probability_estimation_runs(),
                     predicate=False,
                     regression_probability=1.0,
-                    model_dirs=executed_env_dominate_false.get_model_dirs()
+                    model_dirs=executed_env_dominate_false.get_model_dirs(),
                 )
 
                 self.buffer_executions_skipped.append(
                     ExecutionSkipped(
                         env_predicate_pair_skipped=env_predicate_pair,
                         env_predicate_pair_executed=executed_env_dominate_false,
-                        search_component='random'
+                        search_component="random",
                     )
                 )
             elif executed_env_dominate_true:
-                assert executed_env_dominate_false is None, 'it can\'t be that env {} is dominated by True env {} and dominates False env {}'.format(
+                assert (
+                    executed_env_dominate_false is None
+                ), "it can't be that env {} is dominated by True env {} and dominates False env {}".format(
                     current_env_variables.get_params_string(),
                     executed_env_dominate_true.get_env_variables().get_params_string(),
                     executed_env_dominate_false.get_env_variables().get_params_string(),
                 )
-                self.logger.debug('dominance_analysis: env {} not executed because dominated by True env {}'.format(
-                    current_env_variables.get_params_string(),
-                    executed_env_dominate_true.get_env_variables().get_params_string())
+                self.logger.debug(
+                    "dominance_analysis: env {} not executed because dominated by True env {}".format(
+                        current_env_variables.get_params_string(),
+                        executed_env_dominate_true.get_env_variables().get_params_string(),
+                    )
                 )
                 env_predicate_pair = EnvPredicatePair(
                     env_variables=current_env_variables,
@@ -308,13 +332,13 @@ class RandomSearch:
                     predicate=True,
                     regression_probability=executed_env_dominate_true.get_regression_probability(),
                     regression_estimation_runs=executed_env_dominate_true.get_regression_estimation_runs(),
-                    model_dirs=executed_env_dominate_true.get_model_dirs()
+                    model_dirs=executed_env_dominate_true.get_model_dirs(),
                 )
                 self.buffer_executions_skipped.append(
                     ExecutionSkipped(
                         env_predicate_pair_skipped=env_predicate_pair,
                         env_predicate_pair_executed=executed_env_dominate_true,
-                        search_component='random'
+                        search_component="random",
                     )
                 )
             else:
@@ -336,23 +360,24 @@ class RandomSearch:
                     first_candidate_frontier_env_variables.set_param(
                         index=i,
                         new_value=compute_inverse_dist_random_search(
-                            env_variables=current_env_variables,
-                            index_param=i,
-                            epsilon=self.binary_search_epsilon)[0]
+                            env_variables=current_env_variables, index_param=i, epsilon=self.binary_search_epsilon
+                        )[0],
                     )
                     dist = compute_dist(
                         t_env_variables=current_env_variables, f_env_variables=first_candidate_frontier_env_variables
                     )
-                    self.logger.info('1) Dist: {}'.format(dist))
+                    self.logger.info("1) Dist: {}".format(dist))
                     if not is_frontier_pair(
-                            t_env_variables=current_env_variables,
-                            f_env_variables=first_candidate_frontier_env_variables,
-                            epsilon=self.binary_search_epsilon) \
-                            or math.isclose(dist, 0.0):
-                        self.logger.warn('1) Discarding the pair env_1: {}, env_2: {} since it is not a potential frontier pair'.format(
-                            current_env_variables.get_params_string(),
-                            first_candidate_frontier_env_variables.get_params_string()
-                        ))
+                        t_env_variables=current_env_variables,
+                        f_env_variables=first_candidate_frontier_env_variables,
+                        epsilon=self.binary_search_epsilon,
+                    ) or math.isclose(dist, 0.0):
+                        self.logger.warn(
+                            "1) Discarding the pair env_1: {}, env_2: {} since it is not a potential frontier pair".format(
+                                current_env_variables.get_params_string(),
+                                first_candidate_frontier_env_variables.get_params_string(),
+                            )
+                        )
                     else:
                         candidates_frontier_env_variables.append(first_candidate_frontier_env_variables)
                 except ValueError:
@@ -362,23 +387,24 @@ class RandomSearch:
                     second_candidate_frontier_env_variables.set_param(
                         index=i,
                         new_value=compute_inverse_dist_random_search(
-                            env_variables=current_env_variables,
-                            index_param=i,
-                            epsilon=self.binary_search_epsilon)[1]
+                            env_variables=current_env_variables, index_param=i, epsilon=self.binary_search_epsilon
+                        )[1],
                     )
                     dist = compute_dist(
                         t_env_variables=current_env_variables, f_env_variables=second_candidate_frontier_env_variables
                     )
-                    self.logger.info('2) Dist: {}'.format(dist))
+                    self.logger.info("2) Dist: {}".format(dist))
                     if not is_frontier_pair(
-                            t_env_variables=current_env_variables,
-                            f_env_variables=second_candidate_frontier_env_variables,
-                            epsilon=self.binary_search_epsilon)\
-                            or math.isclose(dist, 0.0):
-                        self.logger.warn('2) Discarding the pair env_1: {}, env_2: {} since it is not a potential frontier pair'.format(
-                            current_env_variables.get_params_string(),
-                            second_candidate_frontier_env_variables.get_params_string()
-                        ))
+                        t_env_variables=current_env_variables,
+                        f_env_variables=second_candidate_frontier_env_variables,
+                        epsilon=self.binary_search_epsilon,
+                    ) or math.isclose(dist, 0.0):
+                        self.logger.warn(
+                            "2) Discarding the pair env_1: {}, env_2: {} since it is not a potential frontier pair".format(
+                                current_env_variables.get_params_string(),
+                                second_candidate_frontier_env_variables.get_params_string(),
+                            )
+                        )
                     else:
                         candidates_frontier_env_variables.append(second_candidate_frontier_env_variables)
                 except ValueError:
@@ -386,10 +412,15 @@ class RandomSearch:
 
             current_env_predicate_pair = copy.deepcopy(env_predicate_pair)
 
-            self.logger.info('Evaluating neighbors of env {}. Len {}, frontier {}'.format(
-                current_env_variables.get_params_string(), len(candidates_frontier_env_variables),
-                [candidate_frontier_env_variables.get_params_string() for candidate_frontier_env_variables
-                 in candidates_frontier_env_variables])
+            self.logger.info(
+                "Evaluating neighbors of env {}. Len {}, frontier {}".format(
+                    current_env_variables.get_params_string(),
+                    len(candidates_frontier_env_variables),
+                    [
+                        candidate_frontier_env_variables.get_params_string()
+                        for candidate_frontier_env_variables in candidates_frontier_env_variables
+                    ],
+                )
             )
 
             if self.parallelize_search:
@@ -413,13 +444,14 @@ class RandomSearch:
                     search_suffixes.append(search_suffix)
 
                 num_of_processes_to_spawn = NUM_OF_THREADS // self.runs_for_probability_estimation
-                self.logger.info('max num of processes to spawn: {}'.format(num_of_processes_to_spawn))
+                self.logger.info("max num of processes to spawn: {}".format(num_of_processes_to_spawn))
                 queue = Queue()
                 queue_result = Queue()
                 # Create worker threads
                 for _ in range(num_of_processes_to_spawn):
-                    worker = IterationsWorker(queue=queue, queue_result=queue_result,
-                                              runner=self.runner, start_time=self.start_time)
+                    worker = IterationsWorker(
+                        queue=queue, queue_result=queue_result, runner=self.runner, start_time=self.start_time
+                    )
                     # Setting daemon to True will let the main thread exit even though the workers are blocking
                     worker.daemon = True
                     worker.start()
@@ -444,13 +476,15 @@ class RandomSearch:
                     self.buffer_env_predicate_pairs.append(env_predicate_pair=env_predicate_pair)
                     if current_env_predicate_pair.is_predicate() and not env_predicate_pair.is_predicate():
                         f_env_variables = copy.deepcopy(env_predicate_pair.get_env_variables())
-                        self.archive.append(t_env_variables=current_env_predicate_pair.get_env_variables(),
-                                            f_env_variables=f_env_variables)
+                        self.archive.append(
+                            t_env_variables=current_env_predicate_pair.get_env_variables(), f_env_variables=f_env_variables
+                        )
 
                     if not current_env_predicate_pair.is_predicate() and env_predicate_pair.is_predicate():
                         t_env_variables = copy.deepcopy(env_predicate_pair.get_env_variables())
-                        self.archive.append(t_env_variables=t_env_variables,
-                                            f_env_variables=current_env_predicate_pair.get_env_variables())
+                        self.archive.append(
+                            t_env_variables=t_env_variables, f_env_variables=current_env_predicate_pair.get_env_variables()
+                        )
 
             else:
                 for i, candidate_frontier_env_variables in enumerate(candidates_frontier_env_variables):
@@ -471,41 +505,47 @@ class RandomSearch:
                     )
 
                     if executed_env_dominate_false:
-                        assert executed_env_dominate_true is None, 'it can\'t be that env {} dominates False env {} and is dominated by True env {}'.format(
+                        assert (
+                            executed_env_dominate_true is None
+                        ), "it can't be that env {} dominates False env {} and is dominated by True env {}".format(
                             candidate_frontier_env_variables.get_params_string(),
                             executed_env_dominate_false.get_env_variables().get_params_string(),
-                            executed_env_dominate_true.get_env_variables().get_params_string()
+                            executed_env_dominate_true.get_env_variables().get_params_string(),
                         )
                         self.logger.debug(
-                            'dominance analysis: env {} not executed because dominates False env {}'.format(
+                            "dominance analysis: env {} not executed because dominates False env {}".format(
                                 candidate_frontier_env_variables.get_params_string(),
-                                executed_env_dominate_false.get_env_variables().get_params_string())
+                                executed_env_dominate_false.get_env_variables().get_params_string(),
+                            )
                         )
                         env_predicate_pair = EnvPredicatePair(
                             env_variables=candidate_frontier_env_variables,
                             probability_estimation_runs=executed_env_dominate_false.get_probability_estimation_runs(),
                             predicate=False,
                             regression_probability=1.0,
-                            model_dirs=executed_env_dominate_false.get_model_dirs()
+                            model_dirs=executed_env_dominate_false.get_model_dirs(),
                         )
 
                         self.buffer_executions_skipped.append(
                             ExecutionSkipped(
                                 env_predicate_pair_skipped=env_predicate_pair,
                                 env_predicate_pair_executed=executed_env_dominate_false,
-                                search_component='random'
+                                search_component="random",
                             )
                         )
                     elif executed_env_dominate_true:
-                        assert executed_env_dominate_false is None, 'it can\'t be that env {} is dominated by True env {} and dominates False env {}'.format(
+                        assert (
+                            executed_env_dominate_false is None
+                        ), "it can't be that env {} is dominated by True env {} and dominates False env {}".format(
                             candidate_frontier_env_variables.get_params_string(),
                             executed_env_dominate_true.get_env_variables().get_params_string(),
                             executed_env_dominate_false.get_env_variables().get_params_string(),
                         )
                         self.logger.debug(
-                            'dominance_analysis: env {} not executed because dominated by True env {}'.format(
+                            "dominance_analysis: env {} not executed because dominated by True env {}".format(
                                 candidate_frontier_env_variables.get_params_string(),
-                                executed_env_dominate_true.get_env_variables().get_params_string())
+                                executed_env_dominate_true.get_env_variables().get_params_string(),
+                            )
                         )
                         env_predicate_pair = EnvPredicatePair(
                             env_variables=candidate_frontier_env_variables,
@@ -513,13 +553,13 @@ class RandomSearch:
                             predicate=True,
                             regression_probability=executed_env_dominate_true.get_regression_probability(),
                             regression_estimation_runs=executed_env_dominate_true.get_regression_estimation_runs(),
-                            model_dirs=executed_env_dominate_true.get_model_dirs()
+                            model_dirs=executed_env_dominate_true.get_model_dirs(),
                         )
                         self.buffer_executions_skipped.append(
                             ExecutionSkipped(
                                 env_predicate_pair_skipped=env_predicate_pair,
                                 env_predicate_pair_executed=executed_env_dominate_true,
-                                search_component='random'
+                                search_component="random",
                             )
                         )
                     else:
@@ -543,13 +583,15 @@ class RandomSearch:
                     self.buffer_env_predicate_pairs.append(env_predicate_pair=env_predicate_pair)
                     if current_env_predicate_pair.is_predicate() and not env_predicate_pair.is_predicate():
                         f_env_variables = copy.deepcopy(env_predicate_pair.get_env_variables())
-                        self.archive.append(t_env_variables=current_env_predicate_pair.get_env_variables(),
-                                            f_env_variables=f_env_variables)
+                        self.archive.append(
+                            t_env_variables=current_env_predicate_pair.get_env_variables(), f_env_variables=f_env_variables
+                        )
 
                     if not current_env_predicate_pair.is_predicate() and env_predicate_pair.is_predicate():
                         t_env_variables = copy.deepcopy(env_predicate_pair.get_env_variables())
-                        self.archive.append(t_env_variables=t_env_variables,
-                                            f_env_variables=current_env_predicate_pair.get_env_variables())
+                        self.archive.append(
+                            t_env_variables=t_env_variables, f_env_variables=current_env_predicate_pair.get_env_variables()
+                        )
 
                     if self.stop_at_first_iteration:
                         break
@@ -559,8 +601,9 @@ class RandomSearch:
             self.buffer_executions_skipped.save(current_iteration=current_iteration)
 
             self._move_output_directories(current_iteration=current_iteration)
-            save_time_elapsed(save_dir=self.algo_save_dir, current_iteration=current_iteration,
-                              execution_times=execution_times)
+            save_time_elapsed(
+                save_dir=self.algo_save_dir, current_iteration=current_iteration, execution_times=execution_times
+            )
 
         return self.archive
 
@@ -576,9 +619,10 @@ class RandomSearch:
             + self.tb_log_name
             + "_"
             + self.continue_learning_suffix
-            + ("_random_search_" if not self.param_names_string else "_random_search_" + self.param_names_string + '_')
-            + (self.exp_suffix + '_' if self.exp_suffix else '')
-            + str(current_iteration) + '_*'
+            + ("_random_search_" if not self.param_names_string else "_random_search_" + self.param_names_string + "_")
+            + (self.exp_suffix + "_" if self.exp_suffix else "")
+            + str(current_iteration)
+            + "_*"
         )
         if len(saved_dirs) > 0:
             os.makedirs(self.algo_save_dir + "/iteration_" + str(current_iteration), exist_ok=True)

@@ -2,7 +2,8 @@ import numpy as np
 import tensorflow as tf
 from stable_baselines import DQN, logger
 from stable_baselines.common import SetVerbosity, TensorboardWriter, tf_util
-from stable_baselines.common.buffers import PrioritizedReplayBuffer, ReplayBuffer
+from stable_baselines.common.buffers import (PrioritizedReplayBuffer,
+                                             ReplayBuffer)
 from stable_baselines.common.schedules import LinearSchedule
 from stable_baselines.common.vec_env import VecEnv
 
@@ -202,9 +203,11 @@ class CustomDQN(DQN):
 
                     if self.prioritized_replay:
                         new_priorities = np.abs(td_errors) + self.prioritized_replay_eps
-                        assert isinstance(self.replay_buffer, PrioritizedReplayBuffer), \
-                            'replay_buffer should be an instance of PrioritizedReplayBuffer: {}'\
-                                .format(type(self.replay_buffer))
+                        assert isinstance(
+                            self.replay_buffer, PrioritizedReplayBuffer
+                        ), "replay_buffer should be an instance of PrioritizedReplayBuffer: {}".format(
+                            type(self.replay_buffer)
+                        )
                         self.replay_buffer.update_priorities(batch_idxes, new_priorities)
 
                     callback.on_rollout_start()

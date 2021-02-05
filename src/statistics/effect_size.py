@@ -1,7 +1,8 @@
 from bisect import bisect_left
 from typing import List, Tuple
-import scipy.stats as ss
+
 import numpy as np
+import scipy.stats as ss
 
 
 # function to calculate Cohen's d for independent samples
@@ -10,7 +11,7 @@ def cohend(a: List[float], b: List[float]) -> Tuple[float, str]:
     b = np.asarray(b)
     # calculate the size of samples
     m, n = len(a), len(b)
-    assert m == n, 'The two list must be of the same length: {}, {}'.format(m, n)
+    assert m == n, "The two list must be of the same length: {}, {}".format(m, n)
     # calculate the variance of the samples
     s1, s2 = np.var(a, ddof=1), np.var(b, ddof=1)
     # calculate the pooled standard deviation
@@ -19,11 +20,11 @@ def cohend(a: List[float], b: List[float]) -> Tuple[float, str]:
     u1, u2 = np.mean(a), np.mean(b)
     # calculate the effect size
     effect_size = (u1 - u2) / s
-    magnitude = 'large'
+    magnitude = "large"
     if abs(effect_size) < 0.50:
-        magnitude = 'small'
+        magnitude = "small"
     elif 0.50 <= abs(effect_size) < 0.80:
-        magnitude = 'medium'
+        magnitude = "medium"
 
     return effect_size, magnitude
 
@@ -44,7 +45,7 @@ def vargha_delaney(a: List[float], b: List[float]) -> Tuple[float, str]:
     m = len(a)
     n = len(b)
 
-    assert m == n, 'The two list must be of the same length: {}, {}'.format(m, n)
+    assert m == n, "The two list must be of the same length: {}, {}".format(m, n)
 
     r = ss.rankdata(a + b)
     r1 = sum(r[0:m])

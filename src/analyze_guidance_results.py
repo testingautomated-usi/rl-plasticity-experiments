@@ -1,15 +1,17 @@
 import argparse
+import glob
 import itertools
 import logging
 import os
-import glob
 
 import numpy as np
 
 from algo.archive import read_saved_archive
 from log import Log
-from utilities import check_file_existence, get_result_dir_iteration_number, get_result_file_iteration_number, \
-    compute_statistics, filter_resampling_artifacts
+from utilities import (check_file_existence, compute_statistics,
+                       filter_resampling_artifacts,
+                       get_result_dir_iteration_number,
+                       get_result_file_iteration_number)
 
 # for comparison between random and guided choice in exponential and binary search
 if __name__ == "__main__":
@@ -21,11 +23,9 @@ if __name__ == "__main__":
     parser.add_argument("--num_runs_probability_estimation", type=int, required=True, default=3)
     args = parser.parse_args()
 
-    logger = Log('analyze_guidance_results')
+    logger = Log("analyze_guidance_results")
     logging.basicConfig(
-        filename=os.path.join(args.save_dir, 'analyze_guidance_results.txt'),
-        filemode='w',
-        level=logging.DEBUG
+        filename=os.path.join(args.save_dir, "analyze_guidance_results.txt"), filemode="w", level=logging.DEBUG
     )
 
     # analysis per iteration, per search type (binary, exp), cumulative
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
         for i, iteration_dir in enumerate(iterations_dirs_sorted):
             iteration_dir = os.path.join(dir_to_analyze, iteration_dir)
-            logger.info('Analyzing folder {}'.format(iteration_dir))
+            logger.info("Analyzing folder {}".format(iteration_dir))
 
             list_of_archive_files = glob.glob(os.path.join(iteration_dir, "frontier_*.txt"))
             list_of_archive_files = filter_resampling_artifacts(files=list_of_archive_files)
@@ -64,8 +64,7 @@ if __name__ == "__main__":
                 exp_search_runs_dirs = glob.glob(os.path.join(single_iteration_dir, "*_exp_search_*"))
                 if len(exp_search_runs_dirs) != 0:
                     if len(binary_search_runs_dirs) == 0:
-                        logger.warn('!!!!!!!!! Binary search runs are not present. '
-                                    'Make sure this is correct. !!!!!!!!! ')
+                        logger.warn("!!!!!!!!! Binary search runs are not present. " "Make sure this is correct. !!!!!!!!! ")
                     binary_search_runs_it.append(len(binary_search_runs_dirs) / args.num_runs_probability_estimation)
                     exp_search_runs_it.append(len(exp_search_runs_dirs) / args.num_runs_probability_estimation)
 
@@ -108,17 +107,15 @@ if __name__ == "__main__":
                 iteration_exp_dict_0[num_iteration] = []
                 iteration_binary_dict_1[num_iteration] = []
                 iteration_exp_dict_1[num_iteration] = []
-            iteration_binary_dict_0[num_iteration].append(
-                binary_search_runs_comparison_0[num_search_run][num_iteration])
+            iteration_binary_dict_0[num_iteration].append(binary_search_runs_comparison_0[num_search_run][num_iteration])
             iteration_exp_dict_0[num_iteration].append(exp_search_runs_comparison_0[num_search_run][num_iteration])
-            iteration_binary_dict_1[num_iteration].append(
-                binary_search_runs_comparison_1[num_search_run][num_iteration])
+            iteration_binary_dict_1[num_iteration].append(binary_search_runs_comparison_1[num_search_run][num_iteration])
             iteration_exp_dict_1[num_iteration].append(exp_search_runs_comparison_1[num_search_run][num_iteration])
 
-    logger.info('******* frontier points comparison *******')
+    logger.info("******* frontier points comparison *******")
     compute_statistics(a=frontier_points_comparison_0, b=frontier_points_comparison_1, _logger=logger)
 
-    logger.info('******* cumulative comparison *******')
+    logger.info("******* cumulative comparison *******")
     flatten_binary_search_runs_0 = list(itertools.chain(*binary_search_runs_comparison_0))
     flatten_exp_search_runs_0 = list(itertools.chain(*exp_search_runs_comparison_0))
     flatten_binary_search_runs_1 = list(itertools.chain(*binary_search_runs_comparison_1))
@@ -127,42 +124,27 @@ if __name__ == "__main__":
     sum_exp_binary_0 = np.asarray(flatten_binary_search_runs_0) + np.asarray(flatten_exp_search_runs_0)
     sum_exp_binary_1 = np.asarray(flatten_binary_search_runs_1) + np.asarray(flatten_exp_search_runs_1)
     compute_statistics(a=sum_exp_binary_0, b=sum_exp_binary_1, _logger=logger)
-    logger.info('')
+    logger.info("")
 
-    logger.info('******* per_type_search comparison *******')
-    logger.info('-------- exp search --------')
+    logger.info("******* per_type_search comparison *******")
+    logger.info("-------- exp search --------")
     compute_statistics(a=flatten_exp_search_runs_0, b=flatten_exp_search_runs_1, _logger=logger)
-    logger.info('-------- binary search --------')
+    logger.info("-------- binary search --------")
     compute_statistics(a=flatten_binary_search_runs_0, b=flatten_binary_search_runs_1, _logger=logger)
-    logger.info('')
+    logger.info("")
 
-    logger.info('******* cumulative comparison per iteration *******')
+    logger.info("******* cumulative comparison per iteration *******")
     for num_iteration in iteration_binary_dict_0.keys():
-        sum_exp_binary_0 = np.asarray(iteration_binary_dict_0[num_iteration]) \
-                           + np.asarray(iteration_exp_dict_0[num_iteration])
-        sum_exp_binary_1 = np.asarray(iteration_binary_dict_1[num_iteration]) \
-                           + np.asarray(iteration_exp_dict_1[num_iteration])
-        logger.info('++++++++ iteration #{} ++++++++ '.format(num_iteration))
+        sum_exp_binary_0 = np.asarray(iteration_binary_dict_0[num_iteration]) + np.asarray(iteration_exp_dict_0[num_iteration])
+        sum_exp_binary_1 = np.asarray(iteration_binary_dict_1[num_iteration]) + np.asarray(iteration_exp_dict_1[num_iteration])
+        logger.info("++++++++ iteration #{} ++++++++ ".format(num_iteration))
         compute_statistics(a=sum_exp_binary_0, b=sum_exp_binary_1)
-    logger.info('')
+    logger.info("")
 
-    logger.info('******* per_type_search comparison per iteration *******')
+    logger.info("******* per_type_search comparison per iteration *******")
     for num_iteration in iteration_binary_dict_0.keys():
-        logger.info('++++++++ iteration #{} ++++++++ '.format(num_iteration))
-        logger.info('-------- exp search --------')
+        logger.info("++++++++ iteration #{} ++++++++ ".format(num_iteration))
+        logger.info("-------- exp search --------")
         compute_statistics(a=iteration_exp_dict_0[num_iteration], b=iteration_exp_dict_1[num_iteration], _logger=logger)
-        logger.info('-------- binary search --------')
+        logger.info("-------- binary search --------")
         compute_statistics(a=iteration_binary_dict_0[num_iteration], b=iteration_binary_dict_1[num_iteration], _logger=logger)
-
-
-
-
-
-
-
-
-
-
-
-
-

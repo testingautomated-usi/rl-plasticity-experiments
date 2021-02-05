@@ -1,10 +1,10 @@
+import math
 import random
 import time
-import math
 
 from log import Log
 
-logger = Log('Param')
+logger = Log("Param")
 
 
 class Param:
@@ -26,8 +26,9 @@ class Param:
         else:
             self.current_value = current_value
 
-        assert direction == "positive" or direction == "negative" \
-            'direction should be either positive or negative: {}'.format(direction)
+        assert direction == "positive" or direction == "negative" "direction should be either positive or negative: {}".format(
+            direction
+        )
 
         self.default_value = default_value
         self.direction = direction
@@ -43,7 +44,7 @@ class Param:
         self.starting_value_if_zero = starting_value_if_zero
 
         # override direction
-        self.direction = 'positive' if self.default_value == self.low_limit else 'negative'
+        self.direction = "positive" if self.default_value == self.low_limit else "negative"
 
     def __str__(self):
         return (
@@ -87,14 +88,14 @@ class Param:
         return self.current_value
 
     def set_starting_multiplier(self, starting_multiplier: float):
-        assert starting_multiplier > 0.0, 'starting_multiplier > 0: {}'.format(starting_multiplier)
+        assert starting_multiplier > 0.0, "starting_multiplier > 0: {}".format(starting_multiplier)
         self.starting_multiplier = starting_multiplier
 
     def get_starting_multiplier(self) -> float:
         return self.starting_multiplier
 
     def set_percentage_drop(self, percentage_drop: float):
-        assert percentage_drop > 0.0, 'percentage_drop > 0.0: {}'.format(percentage_drop)
+        assert percentage_drop > 0.0, "percentage_drop > 0.0: {}".format(percentage_drop)
         self.percentage_drop = percentage_drop
 
     def get_percentage_drop(self) -> float:
@@ -166,10 +167,10 @@ class Param:
         else:
             new_value = self.current_value
 
-        if (new_value != self.default_value \
-                and (new_value == self.low_limit or new_value == self.high_limit))\
-                or (self.low_limit == 0.0 and math.isclose(new_value, 0.0, abs_tol=1.e-6)):
-            logger.debug('current value reached limit: {}'.format(new_value))
+        if (new_value != self.default_value and (new_value == self.low_limit or new_value == self.high_limit)) or (
+            self.low_limit == 0.0 and math.isclose(new_value, 0.0, abs_tol=1.0e-6)
+        ):
+            logger.debug("current value reached limit: {}".format(new_value))
             return False
 
         if self.starting_multiplier != 0.0 and not ignore_starting_multiplier and not halve_or_double:

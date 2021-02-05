@@ -2,27 +2,26 @@
 copied from openai gym and adapted
 """
 
+from os import path
+
 import gym
+import numpy as np
 from gym import spaces
 from gym.utils import seeding
-import numpy as np
-from os import path
 
 
 class PendulumEnvWrapper(gym.Env):
-    metadata = {
-        'render.modes': ['human', 'rgb_array'],
-        'video.frames_per_second': 30
-    }
+    metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 30}
 
-    def __init__(self,
-                 g: float = 10.0,
-                 dt: float = 0.05,
-                 mass: float = 1.0,
-                 length: float = 1.0,
-                 discrete_action_space: bool = False,
-                 manual: bool = False
-                 ):
+    def __init__(
+        self,
+        g: float = 10.0,
+        dt: float = 0.05,
+        mass: float = 1.0,
+        length: float = 1.0,
+        discrete_action_space: bool = False,
+        manual: bool = False,
+    ):
         # cannot be changed because it is part of the observation space
         self.max_speed = 8
         # cannot be changed because it is part of the action space
@@ -37,7 +36,7 @@ class PendulumEnvWrapper(gym.Env):
         self.discrete_action_space = discrete_action_space
         self.manual = manual
 
-        high = np.array([1., 1., self.max_speed])
+        high = np.array([1.0, 1.0, self.max_speed])
         if self.discrete_action_space or self.manual:
             if self.manual:
                 self.action_space = spaces.Discrete(3)
@@ -71,9 +70,9 @@ class PendulumEnvWrapper(gym.Env):
             u = np.clip(u, -self.max_torque, self.max_torque)[0]
 
         self.last_u = u  # for rendering
-        costs = angle_normalize(th) ** 2 + .1 * thdot ** 2 + .001 * (u ** 2)
+        costs = angle_normalize(th) ** 2 + 0.1 * thdot ** 2 + 0.001 * (u ** 2)
 
-        newthdot = thdot + (-3 * g / (2 * l) * np.sin(th + np.pi) + 3. / (m * l ** 2) * u) * dt
+        newthdot = thdot + (-3 * g / (2 * l) * np.sin(th + np.pi) + 3.0 / (m * l ** 2) * u) * dt
         newth = th + newthdot * dt
         newthdot = np.clip(newthdot, -self.max_speed, self.max_speed)  # pylint: disable=E1111
 
@@ -91,22 +90,23 @@ class PendulumEnvWrapper(gym.Env):
         theta, thetadot = self.state
         return np.array([np.cos(theta), np.sin(theta), thetadot])
 
-    def render(self, mode='human'):
+    def render(self, mode="human"):
 
         if self.viewer is None:
             from gym.envs.classic_control import rendering
+
             self.viewer = rendering.Viewer(500, 500)
             self.viewer.set_bounds(-2.2, 2.2, -2.2, 2.2)
-            rod = rendering.make_capsule(1, .2)
-            rod.set_color(.8, .3, .3)
+            rod = rendering.make_capsule(1, 0.2)
+            rod.set_color(0.8, 0.3, 0.3)
             self.pole_transform = rendering.Transform()
             rod.add_attr(self.pole_transform)
             self.viewer.add_geom(rod)
-            axle = rendering.make_circle(.05)
+            axle = rendering.make_circle(0.05)
             axle.set_color(0, 0, 0)
             self.viewer.add_geom(axle)
             fname = path.join(path.dirname(__file__), "assets/clockwise.png")
-            self.img = rendering.Image(fname, 1., 1.)
+            self.img = rendering.Image(fname, 1.0, 1.0)
             self.imgtrans = rendering.Transform()
             self.img.add_attr(self.imgtrans)
 
@@ -115,7 +115,7 @@ class PendulumEnvWrapper(gym.Env):
         if self.last_u:
             self.imgtrans.scale = (-self.last_u / 2, np.abs(self.last_u) / 2)
 
-        return self.viewer.render(return_rgb_array=mode == 'rgb_array')
+        return self.viewer.render(return_rgb_array=mode == "rgb_array")
 
     def close(self):
         if self.viewer:
@@ -123,8 +123,9 @@ class PendulumEnvWrapper(gym.Env):
             self.viewer = None
 
     def __str__(self) -> str:
-        return '(dt: {}, length: {}, mass: {}, discrete_action_space: {})'\
-            .format(self.dt, self.l, self.m, self.discrete_action_space)
+        return "(dt: {}, length: {}, mass: {}, discrete_action_space: {})".format(
+            self.dt, self.l, self.m, self.discrete_action_space
+        )
 
 
 def angle_normalize(x):
@@ -133,8 +134,9 @@ def angle_normalize(x):
 
 if __name__ == "__main__":
     import time
-    from gym.wrappers import TimeLimit
+
     import gym
+    from gym.wrappers import TimeLimit
 
     # # original
     # env = PendulumEnv(manual=True)
@@ -149,14 +151,15 @@ if __name__ == "__main__":
     human_wants_restart = False
     human_sets_pause = False
 
-
     def key_press(key, mod):
         global human_agent_action, human_wants_restart, human_sets_pause
         # enter
-        if key == 0xff0d: human_wants_restart = True
+        if key == 0xFF0D:
+            human_wants_restart = True
         # backspace
-        if key == 32: human_sets_pause = not human_sets_pause
-        a = int(key - ord('0'))
+        if key == 32:
+            human_sets_pause = not human_sets_pause
+        a = int(key - ord("0"))
         # left
         if a == 65313:
             human_agent_action = 1
@@ -166,22 +169,19 @@ if __name__ == "__main__":
         else:
             return
 
-
     def key_release(key, mod):
         global human_agent_action
-        a = int(key - ord('0'))
+        a = int(key - ord("0"))
         if a == 65313 or a == 65315:
             # do nothing
             human_agent_action = 0
         else:
             return
 
-
     env.reset()
     env.render()
     env.unwrapped.viewer.window.on_key_press = key_press
     env.unwrapped.viewer.window.on_key_release = key_release
-
 
     def rollout(env):
         global human_agent_action, human_wants_restart, human_sets_pause
@@ -204,16 +204,19 @@ if __name__ == "__main__":
                 print("reward %0.3f" % r)
             total_reward += r
             window_still_open = env.render()
-            if window_still_open == False: return False
-            if done: break
-            if human_wants_restart: break
+            if window_still_open == False:
+                return False
+            if done:
+                break
+            if human_wants_restart:
+                break
             while human_sets_pause:
                 env.render()
                 time.sleep(0.1)
             time.sleep(0.1)
         print("timesteps %i reward %0.2f" % (total_timesteps, total_reward))
 
-
     while 1:
         window_still_open = rollout(env)
-        if window_still_open == False: break
+        if window_still_open == False:
+            break

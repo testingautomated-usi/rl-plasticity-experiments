@@ -1,10 +1,11 @@
 import os
-from typing import List, Tuple, Dict
-from matplotlib.colors import LinearSegmentedColormap
+from typing import Dict, List, Tuple
+
 import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
 import numpy as np
+import pandas as pd
+import seaborn as sns
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.text import Text
 
 from algo.env_predicate_pair import BufferItem
@@ -12,7 +13,8 @@ from env_utils import standardize_env_name
 from envs.env_variables import load_env_params
 from log import Log
 from param import Param
-from utilities import get_num_digits_after_floating_point, get_num_digits_before_floating_point
+from utilities import (get_num_digits_after_floating_point,
+                       get_num_digits_before_floating_point)
 
 
 def get_num_significant_digits(labels: List[Text] = None, values: List[float] = None) -> int:
@@ -46,30 +48,30 @@ def get_num_significant_digits(labels: List[Text] = None, values: List[float] = 
 
 
 def plot_heatmap(
-        buffer: List[BufferItem],
-        grid_indices_with_values: dict,
-        grid_components: dict,
-        tensor_shape: Tuple,
-        env_values_repeated: Dict,
-        env_values_dict: Dict,
-        regression_probability: bool,
-        param_names: List[str],
-        approximated_tensor: np.ndarray,
-        show_plot: bool,
-        plot_only_approximated: bool,
-        algo_name: str,
-        env_name: str,
-        interpolation_function: str,
-        plot_file_path: str = None,
-        plot_nn: bool = False,
-        model_suffix: str = None,
-        max_points_x: int = None,
-        skip_points_x: int = None,
-        max_points_y: int = None,
-        skip_points_y: int = None,
-        indices_frontier_not_adapted_appr: List[Tuple] = None
+    buffer: List[BufferItem],
+    grid_indices_with_values: dict,
+    grid_components: dict,
+    tensor_shape: Tuple,
+    env_values_repeated: Dict,
+    env_values_dict: Dict,
+    regression_probability: bool,
+    param_names: List[str],
+    approximated_tensor: np.ndarray,
+    show_plot: bool,
+    plot_only_approximated: bool,
+    algo_name: str,
+    env_name: str,
+    interpolation_function: str,
+    plot_file_path: str = None,
+    plot_nn: bool = False,
+    model_suffix: str = None,
+    max_points_x: int = None,
+    skip_points_x: int = None,
+    max_points_y: int = None,
+    skip_points_y: int = None,
+    indices_frontier_not_adapted_appr: List[Tuple] = None,
 ):
-    logger = Log('plot_heatmap')
+    logger = Log("plot_heatmap")
 
     env_values_not_resampling = []
     for buffer_item in buffer:
@@ -93,7 +95,7 @@ def plot_heatmap(
             first_param_values_step.append(mutated_pair[0])
             second_param_values_step.append(mutated_pair[1])
             probabilities_step.append(pass_probability)
-    assert values_set == len(grid_indices_with_values), '{} != {}'.format(values_set, len(grid_indices_with_values))
+    assert values_set == len(grid_indices_with_values), "{} != {}".format(values_set, len(grid_indices_with_values))
 
     SMALL_SIZE = 8
     MEDIUM_SIZE = 10
@@ -104,13 +106,13 @@ def plot_heatmap(
         MEDIUM_SIZE = 14
         BIGGER_SIZE = 14
 
-    plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
-    plt.rc('axes', titlesize=SMALL_SIZE)  # fontsize of the axes title
-    plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
-    plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-    plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-    plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
-    plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+    plt.rc("font", size=SMALL_SIZE)  # controls default text sizes
+    plt.rc("axes", titlesize=SMALL_SIZE)  # fontsize of the axes title
+    plt.rc("axes", labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
+    plt.rc("xtick", labelsize=SMALL_SIZE)  # fontsize of the tick labels
+    plt.rc("ytick", labelsize=SMALL_SIZE)  # fontsize of the tick labels
+    plt.rc("legend", fontsize=SMALL_SIZE)  # legend fontsize
+    plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
     lsts_values_repeated = list(env_values_repeated.values())
     first_param_values_repeated = lsts_values_repeated[0]
@@ -130,31 +132,42 @@ def plot_heatmap(
 
     apprx_ax = plt.gca()
 
-    colors = ['red', 'gold', 'green'] if not regression_probability else ['green', 'gold', 'red']
-    cmap = LinearSegmentedColormap.from_list(name='test', colors=colors)
+    colors = ["red", "gold", "green"] if not regression_probability else ["green", "gold", "red"]
+    cmap = LinearSegmentedColormap.from_list(name="test", colors=colors)
 
     dict_for_df = {
         param_names[0]: first_param_values_step,
         param_names[1]: second_param_values_step,
-        'pass_probability': probabilities_step
+        "pass_probability": probabilities_step,
     }
 
     df = pd.DataFrame(dict_for_df)
-    heatmap_data = pd.pivot_table(df, dropna=False, values='pass_probability',
-                                  index=param_names[1], columns=param_names[0])
+    heatmap_data = pd.pivot_table(df, dropna=False, values="pass_probability", index=param_names[1], columns=param_names[0])
 
-    first_param = Param(**load_env_params(
-        algo_name=algo_name,
-        env_name=standardize_env_name(env_name=env_name),
-        param_name=param_names[0], model_suffix=model_suffix), id=0, name=param_names[0])
-    second_param = Param(**load_env_params(
-        algo_name=algo_name,
-        env_name=standardize_env_name(env_name=env_name),
-        param_name=param_names[1], model_suffix=model_suffix), id=1, name=param_names[0])
+    first_param = Param(
+        **load_env_params(
+            algo_name=algo_name,
+            env_name=standardize_env_name(env_name=env_name),
+            param_name=param_names[0],
+            model_suffix=model_suffix,
+        ),
+        id=0,
+        name=param_names[0]
+    )
+    second_param = Param(
+        **load_env_params(
+            algo_name=algo_name,
+            env_name=standardize_env_name(env_name=env_name),
+            param_name=param_names[1],
+            model_suffix=model_suffix,
+        ),
+        id=1,
+        name=param_names[0]
+    )
 
     # first_param = x, second_param = y
-    direction_x = 'ltr' if first_param.get_starting_multiplier() > 1 and first_param.get_direction() == 'positive' else 'rtl'
-    direction_y = 'btt' if second_param.get_starting_multiplier() > 1 and second_param.get_direction() == 'positive' else 'ttb'
+    direction_x = "ltr" if first_param.get_starting_multiplier() > 1 and first_param.get_direction() == "positive" else "rtl"
+    direction_y = "btt" if second_param.get_starting_multiplier() > 1 and second_param.get_direction() == "positive" else "ttb"
 
     if not plot_only_approximated:
 
@@ -165,7 +178,7 @@ def plot_heatmap(
             cmap=cmap,
             vmin=0,
             vmax=1,
-            cbar_kws={'label': 'Pass probability' if not regression_probability else 'Regression probability'}
+            cbar_kws={"label": "Pass probability" if not regression_probability else "Regression probability"},
         )
 
         xticks_rounded = []
@@ -190,14 +203,14 @@ def plot_heatmap(
                 round_label = round(num_to_represent, num_significant_digits)
                 yticks_rounded.append(Text(x=colorbar_label._x, y=colorbar_label._y, text=str(round_label)))
 
-        if direction_x == 'ltr' and direction_y == 'btt':
+        if direction_x == "ltr" and direction_y == "btt":
             grid_ax.invert_yaxis()
-        elif direction_x == 'rtl' and direction_y == 'btt':
+        elif direction_x == "rtl" and direction_y == "btt":
             grid_ax.invert_yaxis()
             grid_ax.invert_xaxis()
-        elif direction_x == 'ltr' and direction_y == 'ttb':
+        elif direction_x == "ltr" and direction_y == "ttb":
             raise NotImplementedError()
-        elif direction_x == 'rtl' and direction_y == 'ttb':
+        elif direction_x == "rtl" and direction_y == "ttb":
             raise NotImplementedError()
 
         grid_ax.set_xticklabels(xticks_rounded, rotation=90)
@@ -223,8 +236,9 @@ def plot_heatmap(
         max_limit_first_param = round(limits_first_param[1], 5)
         min_limit_second_param = round(limits_second_param[0], 5)
         max_limit_second_param = round(limits_second_param[1], 5)
-        if (min_limit_first_param <= value_first_param <= max_limit_first_param) \
-                and (min_limit_second_param <= value_second_param <= max_limit_second_param):
+        if (min_limit_first_param <= value_first_param <= max_limit_first_param) and (
+            min_limit_second_param <= value_second_param <= max_limit_second_param
+        ):
 
             if (value_first_param, value_second_param) not in env_values_not_resampling:
                 first_param_values_resampling.append(value_first_param)
@@ -233,19 +247,26 @@ def plot_heatmap(
                 first_param_values.append(value_first_param)
                 second_param_values.append(value_second_param)
         else:
-            logger.warn('Discarding pair {} from scatterplot because beyond limits [{}. {}], [{}, {}]'.format(
-                (value_first_param, value_second_param), min_limit_first_param, max_limit_first_param,
-                min_limit_second_param, max_limit_second_param))
+            logger.warn(
+                "Discarding pair {} from scatterplot because beyond limits [{}. {}], [{}, {}]".format(
+                    (value_first_param, value_second_param),
+                    min_limit_first_param,
+                    max_limit_first_param,
+                    min_limit_second_param,
+                    max_limit_second_param,
+                )
+            )
 
     if regression_probability and indices_frontier_not_adapted_appr:
-        cmap.colorbar_extend = 'min'
-        cmap.set_under('gray')
+        cmap.colorbar_extend = "min"
+        cmap.set_under("gray")
         for index_frontier_not_adapted_appr in indices_frontier_not_adapted_appr:
             approximated_tensor[tuple(index_frontier_not_adapted_appr)] = -1.0
 
     extent = [min_first_param, max_first_param, min_second_param, max_second_param]
-    hm = apprx_ax.imshow(approximated_tensor, interpolation='none', cmap=cmap, extent=extent, aspect='auto',
-                         origin='lower', vmin=0.0, vmax=1.0)
+    hm = apprx_ax.imshow(
+        approximated_tensor, interpolation="none", cmap=cmap, extent=extent, aspect="auto", origin="lower", vmin=0.0, vmax=1.0
+    )
 
     max_num_points_x = 100 if not max_points_x else max_points_x
     # num_points_to_skip = (len(heatmap_data.axes[1].values) + max_num_points_x // 2) // max_num_points_x
@@ -283,45 +304,42 @@ def plot_heatmap(
     for tick in apprx_ax.get_xticklabels():
         tick.set_rotation(90)
 
-    if direction_x == 'ltr' and direction_y == 'btt':
+    if direction_x == "ltr" and direction_y == "btt":
         pass
-    elif direction_x == 'rtl' and direction_y == 'btt':
+    elif direction_x == "rtl" and direction_y == "btt":
         apprx_ax.invert_xaxis()
-    elif direction_x == 'ltr' and direction_y == 'ttb':
+    elif direction_x == "ltr" and direction_y == "ttb":
         raise NotImplementedError()
-    elif direction_x == 'rtl' and direction_y == 'ttb':
+    elif direction_x == "rtl" and direction_y == "ttb":
         raise NotImplementedError()
 
-    apprx_ax.scatter(first_param_values, second_param_values, s=50, c='black')
+    apprx_ax.scatter(first_param_values, second_param_values, s=50, c="black")
     if len(first_param_values_resampling) > 0:
-        apprx_ax.scatter(first_param_values_resampling, second_param_values_resampling, s=100, marker='*', c='black')
+        apprx_ax.scatter(first_param_values_resampling, second_param_values_resampling, s=100, marker="*", c="black")
 
     # determine points in the adaptation frontier if regression
     if regression_probability:
         pass
 
     cbar = fig.colorbar(hm, ax=apprx_ax)
-    cbar.ax.set_ylabel('Adaptation probability' if not regression_probability else 'Regression probability')
+    cbar.ax.set_ylabel("Adaptation probability" if not regression_probability else "Regression probability")
     apprx_ax.set_xlabel(param_names[0])
     apprx_ax.set_ylabel(param_names[1])
 
     if show_plot:
-        plot_title = 'heatmap_' + interpolation_function + '_' + env_name + '_' + algo_name
+        plot_title = "heatmap_" + interpolation_function + "_" + env_name + "_" + algo_name
         fig.canvas.set_window_title(plot_title)
         plt.show()
     else:
         if plot_file_path:
-            plt.savefig(plot_file_path + '.pdf', format='pdf')
+            plt.savefig(plot_file_path + ".pdf", format="pdf")
         else:
-            abs_prefix = os.path.abspath('../')
+            abs_prefix = os.path.abspath("../")
             file_prefix = 0
-            file_suffix = 'heatmap_' + interpolation_function + '_' + env_name + '_' + algo_name + '_'
-            file_name = file_suffix + str(file_prefix) + '.pdf'
+            file_suffix = "heatmap_" + interpolation_function + "_" + env_name + "_" + algo_name + "_"
+            file_name = file_suffix + str(file_prefix) + ".pdf"
             while os.path.exists(os.path.join(abs_prefix, file_name)):
                 file_prefix += 1
-                file_name = file_suffix + str(file_prefix) + '.pdf'
+                file_name = file_suffix + str(file_prefix) + ".pdf"
 
-            plt.savefig(os.path.join(abs_prefix, file_name), format='pdf')
-
-
-
+            plt.savefig(os.path.join(abs_prefix, file_name), format="pdf")

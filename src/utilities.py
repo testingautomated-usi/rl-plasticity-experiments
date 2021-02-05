@@ -1,5 +1,10 @@
 import argparse
 import multiprocessing
+import os
+import sys
+from statistics.effect_size import cohend, vargha_delaney
+from statistics.power_analysis import parametric_power_analysis
+from statistics.wilcoxon import mannwhitney_test, summary
 from typing import List
 
 import numpy as np
@@ -8,35 +13,28 @@ from stable_baselines.common.policies import FeedForwardPolicy as BasePolicy
 from stable_baselines.common.policies import register_policy
 from stable_baselines.deepq.policies import FeedForwardPolicy
 from stable_baselines.sac.policies import FeedForwardPolicy as SACPolicy
-import os
-import sys
-
-from statistics.effect_size import vargha_delaney
-from statistics.effect_size import cohend
-from statistics.power_analysis import parametric_power_analysis
-from statistics.wilcoxon import summary, mannwhitney_test
 
 
 def parse_at_prefixed_params(args, param_name):
     try:
-        index = args.index('--' + param_name)
+        index = args.index("--" + param_name)
         return args[index + 1]
     except ValueError:
         return None
 
 
-home_abs_path = parse_at_prefixed_params(args=sys.argv, param_name='home_abs_path')
-logging_level = parse_at_prefixed_params(args=sys.argv, param_name='logging_level')
-num_of_threads = parse_at_prefixed_params(args=sys.argv, param_name='num_of_threads')
+home_abs_path = parse_at_prefixed_params(args=sys.argv, param_name="home_abs_path")
+logging_level = parse_at_prefixed_params(args=sys.argv, param_name="logging_level")
+num_of_threads = parse_at_prefixed_params(args=sys.argv, param_name="num_of_threads")
 
-HOME = home_abs_path if home_abs_path else '..'
-LOGGING_LEVEL = logging_level.upper() if logging_level else 'DEBUG'
+HOME = home_abs_path if home_abs_path else ".."
+LOGGING_LEVEL = logging_level.upper() if logging_level else "DEBUG"
 NUM_OF_THREADS = int(num_of_threads) if num_of_threads else multiprocessing.cpu_count() - 1  # account for main thread
-assert LOGGING_LEVEL in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
-PREFIX_DIR_MODELS_SAVE = HOME + '/rl-trained-agents'
+assert LOGGING_LEVEL in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+PREFIX_DIR_MODELS_SAVE = HOME + "/rl-trained-agents"
 
-SUPPORTED_ALGOS = ['ppo2', 'sac', 'dqn']
-SUPPORTED_ENVS = ['CartPole-v1', 'Pendulum-v0', 'MountainCar-v0', 'Acrobot-v1']
+SUPPORTED_ALGOS = ["ppo2", "sac", "dqn"]
+SUPPORTED_ENVS = ["CartPole-v1", "Pendulum-v0", "MountainCar-v0", "Acrobot-v1"]
 CONTINUAL_LEARNING_RANGE_MULTIPLIER = 4
 
 # ================== Custom Policies =================
@@ -49,8 +47,7 @@ class TinyDQNPolicy(FeedForwardPolicy):
 
 class MediumDQNPolicy(FeedForwardPolicy):
     def __init__(self, *args, **kwargs):
-        super(MediumDQNPolicy, self).__init__(*args, **kwargs, layers=[256, 256], layer_norm=True,
-                                              feature_extraction="mlp")
+        super(MediumDQNPolicy, self).__init__(*args, **kwargs, layers=[256, 256], layer_norm=True, feature_extraction="mlp")
 
 
 class LargeDQNPolicy(FeedForwardPolicy):
@@ -173,12 +170,12 @@ class LinearNormalActionNoise(ActionNoise):
 def str2bool(v):
     if isinstance(v, bool):
         return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+    if v.lower() in ("yes", "true", "t", "y", "1"):
         return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+    elif v.lower() in ("no", "false", "f", "n", "0"):
         return False
     else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+        raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
 def check_probability_range(arg):
@@ -194,7 +191,7 @@ def check_probability_range(arg):
 
 
 def check_halve_or_double(halve_or_double) -> str:
-    if halve_or_double == 'halve' or halve_or_double == 'double':
+    if halve_or_double == "halve" or halve_or_double == "double":
         return halve_or_double
 
     message = "halve_or_double == halve or double, {}".format(halve_or_double)
@@ -205,57 +202,64 @@ def check_param_names(csv: str) -> List[str]:
     try:
         param_names = csv.split(sep=",")
         if len(param_names) <= 1:
-            raise SyntaxError('At least 2 param names must be specified: {}'.format(csv))
+            raise SyntaxError("At least 2 param names must be specified: {}".format(csv))
     except Exception:
-        raise SyntaxError('param names must be comma separated: {}'.format(csv))
+        raise SyntaxError("param names must be comma separated: {}".format(csv))
     return param_names
 
 
 def check_file_existence(file_name: str) -> str:
-    assert os.path.exists(file_name), 'file_name {} does not exist'.format(file_name)
+    assert os.path.exists(file_name), "file_name {} does not exist".format(file_name)
     return file_name
 
 
 def filter_resampling_artifacts(files: List[str]) -> List[str]:
-    return list(filter(lambda x: '_resampling' not in x, files))
+    return list(filter(lambda x: "_resampling" not in x, files))
 
 
 def get_result_dir_iteration_number(dirname: str) -> int:
-    assert os.path.isdir(dirname), 'dirname {} must be a directory'.format(dirname)
-    dirname = dirname.replace('_resampling', '')
-    index_last_underscore = dirname.rindex('_')
-    return int(dirname[index_last_underscore + 1:])
+    assert os.path.isdir(dirname), "dirname {} must be a directory".format(dirname)
+    dirname = dirname.replace("_resampling", "")
+    index_last_underscore = dirname.rindex("_")
+    return int(dirname[index_last_underscore + 1 :])
 
 
 def get_result_file_iteration_number(filename: str) -> int:
-    filename = filename.replace('_resampling', '')
-    index_last_underscore = filename.rindex('_')
-    index_last_dot = filename.rindex('.')
-    return int(filename[index_last_underscore + 1:index_last_dot])
+    filename = filename.replace("_resampling", "")
+    index_last_underscore = filename.rindex("_")
+    index_last_dot = filename.rindex(".")
+    return int(filename[index_last_underscore + 1 : index_last_dot])
 
 
-def compute_statistics(a: List[float], b: List[float], _logger, alpha: float = 0.05, power=0.80,
-                       only_summary: bool = False, the_higher_the_better: bool = False):
+def compute_statistics(
+    a: List[float],
+    b: List[float],
+    _logger,
+    alpha: float = 0.05,
+    power=0.80,
+    only_summary: bool = False,
+    the_higher_the_better: bool = False,
+):
     mean_0, std_0, min_0, max_0 = summary(a=a)
     mean_1, std_1, min_1, max_1 = summary(a=b)
-    _logger.info('summary first mode. Mean: {}, Std: {}, Min: {}, Max: {}'.format(mean_0, std_0, min_0, max_0))
-    _logger.info('summary second mode. Mean: {}, Std: {}, Min: {}, Max: {}'.format(mean_1, std_1, min_1, max_1))
+    _logger.info("summary first mode. Mean: {}, Std: {}, Min: {}, Max: {}".format(mean_0, std_0, min_0, max_0))
+    _logger.info("summary second mode. Mean: {}, Std: {}, Min: {}, Max: {}".format(mean_1, std_1, min_1, max_1))
     if mean_0 != 0.0 and mean_1 != 0.0:
         if not only_summary:
             try:
                 _, p_value = mannwhitney_test(a=a, b=b)
-                _logger.info('wilcoxon: p_value = {}'.format(p_value))
+                _logger.info("wilcoxon: p_value = {}".format(p_value))
                 if p_value > alpha:
                     estimate, magnitude = cohend(a=a, b=b)
-                    _logger.info('cohen\'s d: {}, {}'.format(estimate, magnitude))
+                    _logger.info("cohen's d: {}, {}".format(estimate, magnitude))
                     sample_size = parametric_power_analysis(effect=estimate, alpha=alpha, power=power)
-                    _logger.info('sample size required for alpha {} and power {}: {}'.format(alpha, power, sample_size))
+                    _logger.info("sample size required for alpha {} and power {}: {}".format(alpha, power, sample_size))
                 estimate, magnitude = vargha_delaney(a=a, b=b)
                 if the_higher_the_better:
                     estimate = 1 - estimate
-                _logger.info('vargha_delaney: estimate = {}, magnitude = {}'.format(estimate, magnitude))
+                _logger.info("vargha_delaney: estimate = {}, magnitude = {}".format(estimate, magnitude))
             except ValueError:
-                _logger.warn('not possible to compute statistical test')
+                _logger.warn("not possible to compute statistical test")
 
 
 def norm(env_vars_1, env_vars_2=None) -> float:
@@ -265,8 +269,8 @@ def norm(env_vars_1, env_vars_2=None) -> float:
 
 
 def get_num_digits_after_floating_point(number: float) -> int:
-    return len(str(number).split('.')[1])
+    return len(str(number).split(".")[1])
 
 
 def get_num_digits_before_floating_point(number: float) -> int:
-    return len(str(abs(number)).split('.')[0])
+    return len(str(abs(number)).split(".")[0])

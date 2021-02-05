@@ -20,7 +20,7 @@ class EnvPredicatePair:
         regression_estimation_runs: List[bool] = None,
         pass_probability: float = None,
         regression_probability: float = None,
-        model_dirs: List[str] = None
+        model_dirs: List[str] = None,
     ):
         self.env_variables = copy.deepcopy(env_variables)
         self.predicate = predicate
@@ -37,9 +37,9 @@ class EnvPredicatePair:
     def is_predicate(self) -> bool:
         # majority wins
         if self.probability_estimation_runs:
-            assert len(self.probability_estimation_runs) % 2 != 0, \
-                'num probability_estimation_runs should be divisible by 2: {}'\
-                    .format(len(self.probability_estimation_runs))
+            assert (
+                len(self.probability_estimation_runs) % 2 != 0
+            ), "num probability_estimation_runs should be divisible by 2: {}".format(len(self.probability_estimation_runs))
             pass_probability = self.compute_pass_probability()
             return pass_probability > 0.5
         return self.predicate
@@ -77,9 +77,11 @@ class EnvPredicatePair:
         return self.regression_probability
 
     def compute_regression_probability(self) -> float:
-        assert self.regression_estimation_runs or self.regression_probability, \
-            'either regression_estimation_runs or regression_probability should have a value: {}, {}. Env {}' \
-                .format(self.regression_estimation_runs, self.regression_probability, self.env_variables.get_params_string())
+        assert (
+            self.regression_estimation_runs or self.regression_probability
+        ), "either regression_estimation_runs or regression_probability should have a value: {}, {}. Env {}".format(
+            self.regression_estimation_runs, self.regression_probability, self.env_variables.get_params_string()
+        )
         count = 0
         for regression_run in self.regression_estimation_runs:
             if regression_run:
@@ -89,9 +91,11 @@ class EnvPredicatePair:
         return self.regression_probability
 
     def compute_pass_probability(self) -> float:
-        assert self.probability_estimation_runs or self.pass_probability, \
-            'either probability_estimation_runs or pass_probability should have a value: {}, {}. Env {}'\
-                .format(self.probability_estimation_runs, self.pass_probability, self.env_variables.get_params_string())
+        assert (
+            self.probability_estimation_runs or self.pass_probability
+        ), "either probability_estimation_runs or pass_probability should have a value: {}, {}. Env {}".format(
+            self.probability_estimation_runs, self.pass_probability, self.env_variables.get_params_string()
+        )
         if self.probability_estimation_runs:
             count = 0
             for probability_run in self.probability_estimation_runs:
@@ -102,13 +106,16 @@ class EnvPredicatePair:
 
 
 class BufferItem:
-
-    def __init__(self, env_values: Dict, pass_probability: float,
-                 predicate: bool, regression_probability: float,
-                 probability_estimation_runs: List[bool],
-                 regression_estimation_runs: List[bool],
-                 model_dirs: List[str]
-                 ):
+    def __init__(
+        self,
+        env_values: Dict,
+        pass_probability: float,
+        predicate: bool,
+        regression_probability: float,
+        probability_estimation_runs: List[bool],
+        regression_estimation_runs: List[bool],
+        model_dirs: List[str],
+    ):
         self.env_values = env_values
         self.pass_probability = pass_probability
         self.predicate = predicate
@@ -145,11 +152,11 @@ def read_saved_buffer(buffer_file: str) -> List[BufferItem]:
         for line in f.readlines():
 
             # deal with '-' sign in the dictionary containing values which is the same as the separator
-            index_open_curly_brace = line.index('{')
-            index_closed_curly_brace = line.index('}')
-            env_values = eval(line[index_open_curly_brace:index_closed_curly_brace + 1])
-            line_excluded_dict_values = line[index_closed_curly_brace + 2:]
-            items = line_excluded_dict_values.split('-')
+            index_open_curly_brace = line.index("{")
+            index_closed_curly_brace = line.index("}")
+            env_values = eval(line[index_open_curly_brace : index_closed_curly_brace + 1])
+            line_excluded_dict_values = line[index_closed_curly_brace + 2 :]
+            items = line_excluded_dict_values.split("-")
             pass_probability = eval(items[1])
             predicate = eval(items[2])
             if len(items) > 3:
@@ -172,11 +179,17 @@ def read_saved_buffer(buffer_file: str) -> List[BufferItem]:
             else:
                 model_dirs = []
 
-            result.append(BufferItem(env_values=env_values, pass_probability=pass_probability,
-                                     predicate=predicate, regression_probability=regression_probability,
-                                     probability_estimation_runs=probability_estimation_runs,
-                                     regression_estimation_runs=regression_estimation_runs,
-                                     model_dirs=model_dirs))
+            result.append(
+                BufferItem(
+                    env_values=env_values,
+                    pass_probability=pass_probability,
+                    predicate=predicate,
+                    regression_probability=regression_probability,
+                    probability_estimation_runs=probability_estimation_runs,
+                    regression_estimation_runs=regression_estimation_runs,
+                    model_dirs=model_dirs,
+                )
+            )
 
     return result
 
@@ -194,7 +207,7 @@ def _find_closest_env(possible_envs_dict: Dict, env_to_search: EnvVariables) -> 
 
 class BufferEnvPredicatePairs:
     def __init__(self, save_dir: str = None):
-        assert save_dir, 'save_dir should have a value: {}'.format(save_dir)
+        assert save_dir, "save_dir should have a value: {}".format(save_dir)
         self.save_dir = save_dir
         self.env_predicate_pairs: List[EnvPredicatePair] = []
         self.logger = Log("BufferEnvPredicatePairs")
@@ -222,11 +235,14 @@ class BufferEnvPredicatePairs:
             evaluated_env_variables = env_predicate_pair.get_env_variables()
             if evaluated_env_variables.is_equal(evaluated_env):
                 return env_predicate_pair.is_predicate()
-        raise AttributeError('{} must be evaluated'.format(evaluated_env.get_params_string()))
+        raise AttributeError("{} must be evaluated".format(evaluated_env.get_params_string()))
 
-    def dominance_analysis(self, candidate_env_variables: EnvVariables, predicate_to_consider: bool = True) -> Union[EnvPredicatePair, None]:
-        assert not self.is_already_evaluated(candidate_env_variables=candidate_env_variables), \
-            'Env {} must not be evaluated'.format(candidate_env_variables.get_params_string())
+    def dominance_analysis(
+        self, candidate_env_variables: EnvVariables, predicate_to_consider: bool = True
+    ) -> Union[EnvPredicatePair, None]:
+        assert not self.is_already_evaluated(
+            candidate_env_variables=candidate_env_variables
+        ), "Env {} must not be evaluated".format(candidate_env_variables.get_params_string())
 
         executed_env_dominate = None
         if predicate_to_consider:
@@ -237,21 +253,26 @@ class BufferEnvPredicatePairs:
                     dominates = True
                     for i in range(len(env_predicate_pair.get_env_variables().get_params())):
                         direction = env_predicate_pair.get_env_variables().get_param(index=i).get_direction()
-                        starting_multiplier = env_predicate_pair.get_env_variables().get_param(index=i)\
-                            .get_starting_multiplier()
-                        assert direction == 'positive', 'unknown and negative direction is not supported'
+                        starting_multiplier = (
+                            env_predicate_pair.get_env_variables().get_param(index=i).get_starting_multiplier()
+                        )
+                        assert direction == "positive", "unknown and negative direction is not supported"
                         env_value = env_predicate_pair.get_env_variables().get_param(index=i).get_current_value()
                         other_env_value = candidate_env_variables.get_param(index=i).get_current_value()
-                        if direction == 'positive' and starting_multiplier > 1.0:
+                        if direction == "positive" and starting_multiplier > 1.0:
                             if env_value < other_env_value:
                                 dominates = False
-                        elif direction == 'positive' and starting_multiplier < 1.0:
+                        elif direction == "positive" and starting_multiplier < 1.0:
                             if env_value > other_env_value:
                                 dominates = False
                     if dominates:
                         executed_env_dominate = env_predicate_pair
-                        self.logger.debug('candidate {} dominated by executed env {} that evaluates to {}'.format(
-                            candidate_env_variables.get_params_string(), env_predicate_pair.get_env_variables().get_params_string(), predicate)
+                        self.logger.debug(
+                            "candidate {} dominated by executed env {} that evaluates to {}".format(
+                                candidate_env_variables.get_params_string(),
+                                env_predicate_pair.get_env_variables().get_params_string(),
+                                predicate,
+                            )
                         )
         else:
             # searching for an executed env that evaluates to False that is dominated by the env passed as parameter
@@ -261,21 +282,26 @@ class BufferEnvPredicatePairs:
                     is_dominated = True
                     for i in range(len(env_predicate_pair.get_env_variables().get_params())):
                         direction = env_predicate_pair.get_env_variables().get_param(index=i).get_direction()
-                        starting_multiplier = env_predicate_pair.get_env_variables().get_param(index=i)\
-                            .get_starting_multiplier()
-                        assert direction == 'positive', 'unknown and negative direction is not supported'
+                        starting_multiplier = (
+                            env_predicate_pair.get_env_variables().get_param(index=i).get_starting_multiplier()
+                        )
+                        assert direction == "positive", "unknown and negative direction is not supported"
                         env_value = env_predicate_pair.get_env_variables().get_param(index=i).get_current_value()
                         other_env_value = candidate_env_variables.get_param(index=i).get_current_value()
-                        if direction == 'positive' and starting_multiplier > 1.0:
+                        if direction == "positive" and starting_multiplier > 1.0:
                             if other_env_value < env_value:
                                 is_dominated = False
-                        elif direction == 'positive' and starting_multiplier < 1.0:
+                        elif direction == "positive" and starting_multiplier < 1.0:
                             if other_env_value > env_value:
                                 is_dominated = False
                     if is_dominated:
                         executed_env_dominate = env_predicate_pair
-                        self.logger.debug('candidate {} dominates executed env {} that evaluates to {}'.format(
-                            candidate_env_variables.get_params_string(), env_predicate_pair.get_env_variables().get_params_string(), not predicate)
+                        self.logger.debug(
+                            "candidate {} dominates executed env {} that evaluates to {}".format(
+                                candidate_env_variables.get_params_string(),
+                                env_predicate_pair.get_env_variables().get_params_string(),
+                                not predicate,
+                            )
                         )
 
         return executed_env_dominate
@@ -287,8 +313,11 @@ class BufferEnvPredicatePairs:
 
     def save(self, current_iteration: int, resampling: bool = False) -> None:
         self.logger.debug("Saving buffer of env predicate pairs at iteration {}".format(current_iteration))
-        filename = self.save_dir + "/buffer_predicate_pairs_" + str(current_iteration) + ".txt" if not resampling \
+        filename = (
+            self.save_dir + "/buffer_predicate_pairs_" + str(current_iteration) + ".txt"
+            if not resampling
             else self.save_dir + "/buffer_predicate_pairs_" + str(current_iteration) + "_resampling.txt"
+        )
         with open(filename, "w+", encoding="utf-8") as f:
             for env_predicate_pair in self.env_predicate_pairs:
                 if env_predicate_pair.get_probability_estimation_runs():

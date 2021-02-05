@@ -5,7 +5,6 @@ from execution.runner import Runner
 
 
 class IterationsWorker(threading.Thread):
-
     def __init__(self, queue: Queue, queue_result: Queue, runner: Runner, start_time: float):
         threading.Thread.__init__(self)
         self.queue = queue

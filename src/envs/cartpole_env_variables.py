@@ -7,14 +7,29 @@ from param import Param
 
 class CartPoleEnvVariables(EnvVariables):
     def __init__(
-        self, algo_name, masscart=None, masspole=None, length=None, cart_friction=None, discrete_action_space: bool = False,
-            param_names: List[str] = None, model_suffix: str = None,
+        self,
+        algo_name,
+        masscart=None,
+        masspole=None,
+        length=None,
+        cart_friction=None,
+        discrete_action_space: bool = False,
+        param_names: List[str] = None,
+        model_suffix: str = None,
     ):
         # FIXME may be not that efficient loading from disk every time the object is instantiated
-        params_masscart = load_env_params(algo_name=algo_name, env_name="cartpole", param_name="masscart", model_suffix=model_suffix)
-        params_masspole = load_env_params(algo_name=algo_name, env_name="cartpole", param_name="masspole", model_suffix=model_suffix)
-        params_length = load_env_params(algo_name=algo_name, env_name="cartpole", param_name="length", model_suffix=model_suffix)
-        params_cart_friction = load_env_params(algo_name=algo_name, env_name="cartpole", param_name="cart_friction", model_suffix=model_suffix)
+        params_masscart = load_env_params(
+            algo_name=algo_name, env_name="cartpole", param_name="masscart", model_suffix=model_suffix
+        )
+        params_masspole = load_env_params(
+            algo_name=algo_name, env_name="cartpole", param_name="masspole", model_suffix=model_suffix
+        )
+        params_length = load_env_params(
+            algo_name=algo_name, env_name="cartpole", param_name="length", model_suffix=model_suffix
+        )
+        params_cart_friction = load_env_params(
+            algo_name=algo_name, env_name="cartpole", param_name="cart_friction", model_suffix=model_suffix
+        )
 
         self.masscart = Param(**params_masscart, current_value=masscart, id=0, name="masscart")
         self.masspole = Param(**params_masspole, current_value=masspole, id=1, name="masspole")
@@ -33,7 +48,7 @@ class CartPoleEnvVariables(EnvVariables):
                 elif self.cart_friction.get_name() == param_name:
                     self.params.append(self.cart_friction)
 
-            assert len(self.params) > 1, 'num of params should be at least 2: {}'.format(len(self.params))
+            assert len(self.params) > 1, "num of params should be at least 2: {}".format(len(self.params))
         else:
             self.params = [self.masscart, self.masspole, self.length, self.cart_friction]
 

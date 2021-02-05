@@ -3,14 +3,12 @@ copied from openai gym and adapted
 """
 
 import numpy as np
-from numpy import sin, cos, pi
-
 from gym import core, spaces
 from gym.utils import seeding
+from numpy import cos, pi, sin
 
 __copyright__ = "Copyright 2013, RLPy http://acl.mit.edu/RLPy"
-__credits__ = ["Alborz Geramifard", "Robert H. Klein", "Christoph Dann",
-               "William Dabney", "Jonathan P. How"]
+__credits__ = ["Alborz Geramifard", "Robert H. Klein", "Christoph Dann", "William Dabney", "Jonathan P. How"]
 __license__ = "BSD 3-Clause"
 __author__ = "Christoph Dann <cdann@cdann.de>"
 
@@ -55,27 +53,24 @@ class AcrobotEnvWrapper(core.Env):
         see the AcrobotLegacy class.
     """
 
-    metadata = {
-        'render.modes': ['human', 'rgb_array'],
-        'video.frames_per_second': 15
-    }
+    metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 15}
 
-    dt = .2
+    dt = 0.2
 
-    LINK_LENGTH_1 = 1.  # [m]
-    LINK_LENGTH_2 = 1.  # [m]
-    LINK_MASS_1 = 1.  #: [kg] mass of link 1
-    LINK_MASS_2 = 1.  #: [kg] mass of link 2
+    LINK_LENGTH_1 = 1.0  # [m]
+    LINK_LENGTH_2 = 1.0  # [m]
+    LINK_MASS_1 = 1.0  #: [kg] mass of link 1
+    LINK_MASS_2 = 1.0  #: [kg] mass of link 2
     LINK_COM_POS_1 = 0.5  #: [m] position of the center of mass of link 1
     LINK_COM_POS_2 = 0.5  #: [m] position of the center of mass of link 2
-    LINK_MOI = 1.  #: moments of inertia for both links
+    LINK_MOI = 1.0  #: moments of inertia for both links
 
     MAX_VEL_1 = 4 * pi
     MAX_VEL_2 = 9 * pi
 
-    AVAIL_TORQUE = [-1., 0., +1]
+    AVAIL_TORQUE = [-1.0, 0.0, +1]
 
-    torque_noise_max = 0.
+    torque_noise_max = 0.0
 
     #: use dynamics equations from the nips paper or the book
     book_or_nips = "book"
@@ -83,16 +78,17 @@ class AcrobotEnvWrapper(core.Env):
     domain_fig = None
     actions_num = 3
 
-    def __init__(self,
-                 discrete_action_space: bool = False,
-                 manual: bool = False,
-                 link_length_1: float = 1.0,
-                 link_mass_1: float = 1.0,
-                 link_mass_2: float = 1.0,
-                 link_com_pos_1: float = 0.5,
-                 link_com_pos_2: float = 0.5,
-                 link_moi: float = 1.0
-                 ):
+    def __init__(
+        self,
+        discrete_action_space: bool = False,
+        manual: bool = False,
+        link_length_1: float = 1.0,
+        link_mass_1: float = 1.0,
+        link_mass_2: float = 1.0,
+        link_com_pos_1: float = 0.5,
+        link_com_pos_2: float = 0.5,
+        link_moi: float = 1.0,
+    ):
 
         self.viewer = None
 
@@ -161,7 +157,7 @@ class AcrobotEnvWrapper(core.Env):
         ns[3] = bound(ns[3], -self.MAX_VEL_2, self.MAX_VEL_2)
         self.state = ns
         terminal = self._terminal()
-        reward = -1. if not terminal else 0.
+        reward = -1.0 if not terminal else 0.0
         return self._get_ob(), reward, terminal, {}
 
     def _get_ob(self):
@@ -170,7 +166,7 @@ class AcrobotEnvWrapper(core.Env):
 
     def _terminal(self):
         s = self.state
-        return bool(-cos(s[0]) - cos(s[1] + s[0]) > 1.)
+        return bool(-cos(s[0]) - cos(s[1] + s[0]) > 1.0)
 
     def _dsdt(self, s_augmented, t):
         m1 = self.LINK_MASS_1
@@ -187,27 +183,29 @@ class AcrobotEnvWrapper(core.Env):
         theta2 = s[1]
         dtheta1 = s[2]
         dtheta2 = s[3]
-        d1 = m1 * lc1 ** 2 + m2 * \
-             (l1 ** 2 + lc2 ** 2 + 2 * l1 * lc2 * cos(theta2)) + I1 + I2
+        d1 = m1 * lc1 ** 2 + m2 * (l1 ** 2 + lc2 ** 2 + 2 * l1 * lc2 * cos(theta2)) + I1 + I2
         d2 = m2 * (lc2 ** 2 + l1 * lc2 * cos(theta2)) + I2
-        phi2 = m2 * lc2 * g * cos(theta1 + theta2 - pi / 2.)
-        phi1 = - m2 * l1 * lc2 * dtheta2 ** 2 * sin(theta2) \
-               - 2 * m2 * l1 * lc2 * dtheta2 * dtheta1 * sin(theta2) \
-               + (m1 * lc1 + m2 * l1) * g * cos(theta1 - pi / 2) + phi2
+        phi2 = m2 * lc2 * g * cos(theta1 + theta2 - pi / 2.0)
+        phi1 = (
+            -m2 * l1 * lc2 * dtheta2 ** 2 * sin(theta2)
+            - 2 * m2 * l1 * lc2 * dtheta2 * dtheta1 * sin(theta2)
+            + (m1 * lc1 + m2 * l1) * g * cos(theta1 - pi / 2)
+            + phi2
+        )
         if self.book_or_nips == "nips":
             # the following line is consistent with the description in the
             # paper
-            ddtheta2 = (a + d2 / d1 * phi1 - phi2) / \
-                       (m2 * lc2 ** 2 + I2 - d2 ** 2 / d1)
+            ddtheta2 = (a + d2 / d1 * phi1 - phi2) / (m2 * lc2 ** 2 + I2 - d2 ** 2 / d1)
         else:
             # the following line is consistent with the java implementation and the
             # book
-            ddtheta2 = (a + d2 / d1 * phi1 - m2 * l1 * lc2 * dtheta1 ** 2 * sin(theta2) - phi2) \
-                       / (m2 * lc2 ** 2 + I2 - d2 ** 2 / d1)
+            ddtheta2 = (a + d2 / d1 * phi1 - m2 * l1 * lc2 * dtheta1 ** 2 * sin(theta2) - phi2) / (
+                m2 * lc2 ** 2 + I2 - d2 ** 2 / d1
+            )
         ddtheta1 = -(d2 * ddtheta2 + phi1) / d1
-        return dtheta1, dtheta2, ddtheta1, ddtheta2, 0.
+        return dtheta1, dtheta2, ddtheta1, ddtheta2, 0.0
 
-    def render(self, mode='human'):
+    def render(self, mode="human"):
         from gym.envs.classic_control import rendering
 
         s = self.state
@@ -217,13 +215,12 @@ class AcrobotEnvWrapper(core.Env):
             bound = self.LINK_LENGTH_1 + self.LINK_LENGTH_2 + 0.2  # 2.2 for default
             self.viewer.set_bounds(-bound, bound, -bound, bound)
 
-        if s is None: return None
+        if s is None:
+            return None
 
-        p1 = [-self.LINK_LENGTH_1 *
-              cos(s[0]), self.LINK_LENGTH_1 * sin(s[0])]
+        p1 = [-self.LINK_LENGTH_1 * cos(s[0]), self.LINK_LENGTH_1 * sin(s[0])]
 
-        p2 = [p1[0] - self.LINK_LENGTH_2 * cos(s[0] + s[1]),
-              p1[1] + self.LINK_LENGTH_2 * sin(s[0] + s[1])]
+        p2 = [p1[0] - self.LINK_LENGTH_2 * cos(s[0] + s[1]), p1[1] + self.LINK_LENGTH_2 * sin(s[0] + s[1])]
 
         xys = np.array([[0, 0], p1, p2])[:, ::-1]
         thetas = [s[0] - pi / 2, s[0] + s[1] - pi / 2]
@@ -231,16 +228,16 @@ class AcrobotEnvWrapper(core.Env):
 
         self.viewer.draw_line((-2.2, 1), (2.2, 1))
         for ((x, y), th, llen) in zip(xys, thetas, link_lengths):
-            l, r, t, b = 0, llen, .1, -.1
+            l, r, t, b = 0, llen, 0.1, -0.1
             jtransform = rendering.Transform(rotation=th, translation=(x, y))
             link = self.viewer.draw_polygon([(l, b), (l, t), (r, t), (r, b)])
             link.add_attr(jtransform)
-            link.set_color(0, .8, .8)
-            circ = self.viewer.draw_circle(.1)
-            circ.set_color(.8, .8, 0)
+            link.set_color(0, 0.8, 0.8)
+            circ = self.viewer.draw_circle(0.1)
+            circ.set_color(0.8, 0.8, 0)
             circ.add_attr(jtransform)
 
-        return self.viewer.render(return_rgb_array=mode == 'rgb_array')
+        return self.viewer.render(return_rgb_array=mode == "rgb_array")
 
     def close(self):
         if self.viewer:
@@ -248,10 +245,19 @@ class AcrobotEnvWrapper(core.Env):
             self.viewer = None
 
     def __str__(self) -> str:
-        return '(link_length_1: {}, link_length_2: {}, link_com_pos_1: {}, ' \
-               'link_com_pos_2: {}, link_mass_1: {}, link_mass_2: {}, link_moi: {}, discrete_action_space: {})'\
-            .format(self.LINK_LENGTH_1, self.LINK_LENGTH_2, self.LINK_COM_POS_1, self.LINK_COM_POS_2,
-                    self.LINK_MASS_1, self.LINK_MASS_2, self.LINK_MOI, self.discrete_action_space)
+        return (
+            "(link_length_1: {}, link_length_2: {}, link_com_pos_1: {}, "
+            "link_com_pos_2: {}, link_mass_1: {}, link_mass_2: {}, link_moi: {}, discrete_action_space: {})".format(
+                self.LINK_LENGTH_1,
+                self.LINK_LENGTH_2,
+                self.LINK_COM_POS_1,
+                self.LINK_COM_POS_2,
+                self.LINK_MASS_1,
+                self.LINK_MASS_2,
+                self.LINK_MOI,
+                self.discrete_action_space,
+            )
+        )
 
 
 def wrap(x, m, M):
@@ -345,9 +351,9 @@ def rk4(derivs, y0, t, *args, **kwargs):
     return yout
 
 
-
 if __name__ == "__main__":
     import time
+
     import gym
 
     # original
@@ -360,14 +366,15 @@ if __name__ == "__main__":
     human_wants_restart = False
     human_sets_pause = False
 
-
     def key_press(key, mod):
         global human_agent_action, human_wants_restart, human_sets_pause
         # enter
-        if key == 0xff0d: human_wants_restart = True
+        if key == 0xFF0D:
+            human_wants_restart = True
         # backspace
-        if key == 32: human_sets_pause = not human_sets_pause
-        a = int(key - ord('0'))
+        if key == 32:
+            human_sets_pause = not human_sets_pause
+        a = int(key - ord("0"))
         # left
         if a == 65313:
             human_agent_action = 1
@@ -377,22 +384,19 @@ if __name__ == "__main__":
         else:
             return
 
-
     def key_release(key, mod):
         global human_agent_action
-        a = int(key - ord('0'))
+        a = int(key - ord("0"))
         if a == 65313 or a == 65315:
             # do nothing
             human_agent_action = 0
         else:
             return
 
-
     env.reset()
     env.render()
     env.unwrapped.viewer.window.on_key_press = key_press
     env.unwrapped.viewer.window.on_key_release = key_release
-
 
     def rollout(env):
         global human_agent_action, human_wants_restart, human_sets_pause
@@ -415,16 +419,19 @@ if __name__ == "__main__":
             #     print("reward %0.3f" % r)
             total_reward += r
             window_still_open = env.render()
-            if window_still_open == False: return False
-            if done: break
-            if human_wants_restart: break
+            if window_still_open == False:
+                return False
+            if done:
+                break
+            if human_wants_restart:
+                break
             while human_sets_pause:
                 env.render()
                 time.sleep(0.1)
             time.sleep(0.1)
         print("timesteps %i reward %0.2f" % (total_timesteps, total_reward))
 
-
     while 1:
         window_still_open = rollout(env)
-        if window_still_open == False: break
+        if window_still_open == False:
+            break

@@ -13,7 +13,7 @@ class ProgressBarManager(object):
     def __enter__(self):  # create the progress bar and callback, return the callback
         self.pbar = tqdm(total=self.total_timesteps)
 
-        if self.sb_version == 'sb3':
+        if self.sb_version == "sb3":
             return ProgressBarCallback3(self.pbar)
         return ProgressBarCallback(self.pbar)
 

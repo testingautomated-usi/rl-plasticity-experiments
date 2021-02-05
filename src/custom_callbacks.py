@@ -1,7 +1,8 @@
 import os
+import time
 import warnings
 from queue import Queue
-from typing import Optional, Union, Tuple, Dict, Any
+from typing import Any, Dict, Optional, Tuple, Union
 
 import gym
 import numpy as np
@@ -9,7 +10,8 @@ import tensorflow as tf
 from stable_baselines.bench import load_results
 from stable_baselines.common.callbacks import BaseCallback, EventCallback
 from stable_baselines.common.evaluation import evaluate_policy
-from stable_baselines.common.vec_env import DummyVecEnv, VecEnv, sync_envs_normalization, VecNormalize
+from stable_baselines.common.vec_env import (DummyVecEnv, VecEnv, VecNormalize,
+                                             sync_envs_normalization)
 from stable_baselines.results_plotter import X_EPISODES, X_TIMESTEPS
 
 from envs.env_eval_callback import EnvEvalCallback
@@ -17,8 +19,6 @@ from evaluation import custom_evaluate_policy
 from execution.execution_result import ExecutionResult
 from log import Log
 from log_utils import _ts2xy
-
-import time
 
 
 class EvalBaseCallback:
@@ -33,7 +33,6 @@ class EvalBaseCallback:
 
 
 class FpsCallback(BaseCallback, EvalBaseCallback):
-
     def __init__(self):
         super(FpsCallback, self).__init__()
         self.start_time = time.time()
@@ -57,6 +56,7 @@ class SaveVecNormalizeCallback(BaseCallback):
     :param name_prefix: (str) Common prefix to the saved ``VecNormalize``, if None (default)
         only one file will be kept.
     """
+
     def __init__(self, log_every: int, save_path: str, name_prefix=None, verbose=0):
         super(SaveVecNormalizeCallback, self).__init__(verbose)
         self.log_every = log_every
@@ -66,9 +66,9 @@ class SaveVecNormalizeCallback(BaseCallback):
     def _on_step(self) -> bool:
         if self.n_calls % self.log_every == 0:
             if self.name_prefix is not None:
-                path = os.path.join(self.save_path, '{}_{}_steps.pkl'.format(self.name_prefix, self.num_timesteps))
+                path = os.path.join(self.save_path, "{}_{}_steps.pkl".format(self.name_prefix, self.num_timesteps))
             else:
-                path = os.path.join(self.save_path, 'vecnormalize.pkl')
+                path = os.path.join(self.save_path, "vecnormalize.pkl")
             if self.model.get_vec_normalize_env() is not None:
                 self.model.get_vec_normalize_env().save(path)
                 if self.verbose > 1:
@@ -236,6 +236,7 @@ class EvalCallback(EventCallback):
 
         return True
 
+
 class LoggingTrainingMetricsCallback(BaseCallback):
     """
     Callback for saving a model (the check is done every ``check_freq`` steps)
@@ -263,7 +264,7 @@ class LoggingTrainingMetricsCallback(BaseCallback):
         total_timesteps: int = 0,
         communication_queue: Queue = None,
         save_model: bool = True,
-        random_search: bool = False
+        random_search: bool = False,
     ):
         super(LoggingTrainingMetricsCallback, self).__init__(verbose)
         self.log_every = log_every // num_envs
@@ -356,7 +357,7 @@ class LoggingTrainingMetricsCallback(BaseCallback):
 
                 self._save_normalization_artifacts()
 
-                self._logger.debug('Computing adaptation on current env: {}'.format(self.eval_env.env))
+                self._logger.debug("Computing adaptation on current env: {}".format(self.eval_env.env))
                 adequate_performance, info = self.env_eval_callback.evaluate_env(
                     self.model, self.eval_env, n_eval_episodes=self.n_eval_episodes
                 )
@@ -370,9 +371,9 @@ class LoggingTrainingMetricsCallback(BaseCallback):
                             self.model.save(self.save_path)
 
                         if self.original_env and not self.random_search:
-                            self._logger.debug('Computing regression on original env: {}'.format(self.original_env.env))
+                            self._logger.debug("Computing regression on original env: {}".format(self.original_env.env))
                             start_time_regression = time.time()
-                            self._logger.debug('Computing regression on_step')
+                            self._logger.debug("Computing regression on_step")
                             _, info_orig = self.env_eval_callback.evaluate_env(
                                 self.model, self.original_env, n_eval_episodes=100
                             )
@@ -381,18 +382,23 @@ class LoggingTrainingMetricsCallback(BaseCallback):
                             tol = abs(reward_threshold * 5 / 100)
                             regression = mean_reward + tol < reward_threshold
                             regression_time = time.time() - start_time_regression
-                            self._logger.debug('Computing regression on_step time elapsed: {} s. Mean reward: {}'.format(regression_time, mean_reward))
+                            self._logger.debug(
+                                "Computing regression on_step time elapsed: {} s. Mean reward: {}".format(
+                                    regression_time, mean_reward
+                                )
+                            )
 
                     self.task_completed = True
                     # stop training
                     self.communication_queue.put(
-                        ExecutionResult(adequate_performance=adequate_performance,
-                                        regression=regression,
-                                        regression_time=regression_time,
-                                        training_time=(time.time() - self.training_time),
-                                        info=info,
-                                        task_completed=True,
-                                        )
+                        ExecutionResult(
+                            adequate_performance=adequate_performance,
+                            regression=regression,
+                            regression_time=regression_time,
+                            training_time=(time.time() - self.training_time),
+                            info=info,
+                            task_completed=True,
+                        )
                     )
                 else:
                     # continue training
@@ -407,9 +413,7 @@ class LoggingTrainingMetricsCallback(BaseCallback):
         if self.verbose > 0:
             self._logger.debug("Num timesteps: {}".format(self.num_timesteps))
             self._logger.debug(
-                "Best mean reward: {:.2f} - Last mean reward per episode: {:.2f}".format(
-                    self.best_mean_reward, mean_reward
-                )
+                "Best mean reward: {:.2f} - Last mean reward per episode: {:.2f}".format(self.best_mean_reward, mean_reward)
             )
 
         # New best model, you could save the agent here
@@ -424,14 +428,14 @@ class LoggingTrainingMetricsCallback(BaseCallback):
     def _save_normalization_artifacts(self) -> None:
         # if normalize is active
         if isinstance(self.eval_env, VecNormalize) and not self.continue_learning:
-            path = os.path.join(self.log_dir, 'vecnormalize.pkl')
+            path = os.path.join(self.log_dir, "vecnormalize.pkl")
             if self.model.get_vec_normalize_env() is not None:
                 self.model.get_vec_normalize_env().save(path)
                 if self.verbose > 1:
                     print("Saving VecNormalize to {}".format(path))
 
             # don't know why but rewards are still normalized
-            self.eval_env = VecNormalize.load(os.path.join(self.log_dir, 'vecnormalize.pkl'), self.eval_env.unwrapped)
+            self.eval_env = VecNormalize.load(os.path.join(self.log_dir, "vecnormalize.pkl"), self.eval_env.unwrapped)
 
     def _save_best_model_using_eval_callback(self) -> Tuple[float, float]:
 
@@ -441,17 +445,16 @@ class LoggingTrainingMetricsCallback(BaseCallback):
         sync_envs_normalization(self.training_env, self.eval_env)
 
         mean_reward, std_reward = custom_evaluate_policy(
-            self.model,
-            self.eval_env,
-            n_eval_episodes=self.n_eval_episodes,
-            render=False,
-            deterministic=self.deterministic,
+            self.model, self.eval_env, n_eval_episodes=self.n_eval_episodes, render=False, deterministic=self.deterministic,
         )
 
         if mean_reward > self.best_mean_reward_eval:
             # if self.verbose > 0:
-            self._logger.debug('{} - New best mean reward eval: {} (vs {})'
-                               .format(self.num_timesteps, mean_reward, self.best_mean_reward_eval))
+            self._logger.debug(
+                "{} - New best mean reward eval: {} (vs {})".format(
+                    self.num_timesteps, mean_reward, self.best_mean_reward_eval
+                )
+            )
             self.best_mean_reward_eval = mean_reward
             # Example for saving best model
             if self.verbose > 0:
@@ -491,23 +494,26 @@ class LoggingTrainingMetricsCallback(BaseCallback):
 
                 if self.original_env and not self.random_search:
                     start_time_regression = time.time()
-                    self._logger.debug('Computing regression on_training_end')
-                    _, info_orig = self.env_eval_callback.evaluate_env(
-                        self.model, self.original_env, n_eval_episodes=100
-                    )
+                    self._logger.debug("Computing regression on_training_end")
+                    _, info_orig = self.env_eval_callback.evaluate_env(self.model, self.original_env, n_eval_episodes=100)
                     mean_reward = info_orig["mean_reward"]
                     reward_threshold = self.env_eval_callback.get_reward_threshold()
                     tol = abs(reward_threshold * 5 / 100)
                     regression = mean_reward + tol < reward_threshold
                     regression_time = time.time() - start_time_regression
-                    self._logger.debug('Computing regression on_training_end time elapsed: {} s. Mean reward {}'.format(regression_time, mean_reward))
+                    self._logger.debug(
+                        "Computing regression on_training_end time elapsed: {} s. Mean reward {}".format(
+                            regression_time, mean_reward
+                        )
+                    )
 
             self.communication_queue.put(
-                ExecutionResult(adequate_performance=adequate_performance,
-                                regression=regression,
-                                regression_time=regression_time,
-                                training_time=(time.time() - self.training_time),
-                                info=info,
-                                task_completed=True,)
+                ExecutionResult(
+                    adequate_performance=adequate_performance,
+                    regression=regression,
+                    regression_time=regression_time,
+                    training_time=(time.time() - self.training_time),
+                    info=info,
+                    task_completed=True,
+                )
             )
-

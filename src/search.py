@@ -5,7 +5,7 @@ from agent_stub import AgentStub
 from algo.alphatest import AlphaTest
 from env_utils import instantiate_env_variables, instantiate_eval_callback
 from log import Log
-from utilities import check_halve_or_double, check_file_existence
+from utilities import check_file_existence, check_halve_or_double
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("--only_exp_search", type=bool, default=False)
     parser.add_argument("--param_names", type=str, default=None)
     parser.add_argument("--runs_for_probability_estimation", type=int, default=1)
-    parser.add_argument("--sb_version", type=str, default='sb2')
+    parser.add_argument("--sb_version", type=str, default="sb2")
     parser.add_argument("--save_model", type=bool, default=False)
     parser.add_argument("--save_replay_buffer", type=bool, default=False)
     parser.add_argument("--halve_or_double", type=check_halve_or_double, default="double")
@@ -46,23 +46,23 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    logger = Log('search')
+    logger = Log("search")
 
     param_names = None
     if args.param_names:
         try:
             param_names = args.param_names.split(sep=",")
             if len(param_names) != 2:
-                raise SyntaxError('2 param names must be specified: {}'.format(args.param_names))
+                raise SyntaxError("2 param names must be specified: {}".format(args.param_names))
         except Exception:
-            raise SyntaxError('param names must be comma separated: {}'.format(args.param_names))
+            raise SyntaxError("param names must be comma separated: {}".format(args.param_names))
 
     env_variables = instantiate_env_variables(
         algo_name=args.algo_name,
         discrete_action_space=args.discrete_action_space,
         env_name=args.env_name,
         param_names=param_names,
-        model_suffix=args.model_suffix
+        model_suffix=args.model_suffix,
     )
     env_eval_callback = instantiate_eval_callback(env_name=args.env_name)
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             sb_version=args.sb_version,
             save_model=args.save_model,
             save_replay_buffer=args.save_replay_buffer,
-            model_suffix=args.model_suffix
+            model_suffix=args.model_suffix,
         )
     else:
         agent = AgentStub(
@@ -120,12 +120,13 @@ if __name__ == "__main__":
         archive_file=args.archive_file,
         param_names=param_names,
         runs_for_probability_estimation=args.runs_for_probability_estimation,
-        determine_multipliers=args.determine_multipliers
+        determine_multipliers=args.determine_multipliers,
     )
     # TODO automate this if by trying it with different environments you realize it that it works
     if args.determine_multipliers:
-        multipliers, percentage_drops = alphatest.determine_multipliers(num_of_runs=args.num_of_runs_multipliers,
-                                                                        halve_or_double=args.halve_or_double)
+        multipliers, percentage_drops = alphatest.determine_multipliers(
+            num_of_runs=args.num_of_runs_multipliers, halve_or_double=args.halve_or_double
+        )
         logger.debug("Multipliers: {}".format(multipliers))
         logger.debug("Percentage drops: {}".format(percentage_drops))
     else:
