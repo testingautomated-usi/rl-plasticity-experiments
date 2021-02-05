@@ -1,4 +1,5 @@
 #!/bin/bash
+conda activate rl-plasticity-experiments
 
 cd ~/rl-plasticity-experiments/src || exit
 python experiments.py --algo_name sac \
