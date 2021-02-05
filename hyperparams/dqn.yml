@@ -1,0 +1,66 @@
+# full_pt_splines_discrete_vae_3_6
+CarRacing-v2:
+  policy: 'LargeDQNPolicy'
+  n_timesteps: !!float 1e6
+  buffer_size: 1000000
+#  normalize: "{'norm_obs': True, 'norm_reward': True, 'clip_reward': 30.}"
+#  normalize: "{'norm_obs': True, 'norm_reward': False}"
+  learning_rate: !!float 1e-3
+  learning_starts: 1000
+  double_q: True
+  target_network_update_freq: 1000
+  batch_size: 32
+  train_freq: 1
+  exploration_final_eps: 0.01
+  exploration_fraction: 0.1
+  prioritized_replay_alpha: 0.6
+  prioritized_replay: True
+
+CartPole-v1:
+  n_timesteps: !!float 1e5
+  policy: 'MlpPolicy'
+  learning_rate: !!float 1e-3
+  buffer_size: 50000
+  target_network_update_freq: 500
+  train_freq: 4
+  learning_starts: 0
+  exploration_fraction: 0.1
+  exploration_final_eps: 0.02
+  prioritized_replay: True
+
+Pendulum-v0:
+  n_timesteps: !!float 8e4
+  policy: 'MlpPolicy'
+  learning_rate: !!float 1e-3
+  buffer_size: 80000
+  target_network_update_freq: 500
+  train_freq: 4
+  learning_starts: 0
+  exploration_fraction: 0.1
+  exploration_final_eps: 0.02
+  prioritized_replay: True
+
+MountainCar-v0:
+  n_timesteps: 100000
+  policy: 'MlpPolicy'
+  policy_kwargs: "dict(layers=[64, 64])"
+  learning_rate: !!float 1.5e-3
+  target_network_update_freq: 500
+  buffer_size: 80000
+  batch_size: 64
+  learning_starts: 0
+  exploration_fraction: 0.1
+  exploration_final_eps: 0.01
+  param_noise: True
+  prioritized_replay: True
+  train_freq: 2
+
+Acrobot-v1:
+  n_timesteps: !!float 8e4
+  policy: 'MlpPolicy'
+  policy_kwargs: "dict(layers=[64, 64])"
+  learning_rate: !!float 1e-3
+  buffer_size: 50000
+  exploration_fraction: 0.1
+  exploration_final_eps: 0.02
+  prioritized_replay: True

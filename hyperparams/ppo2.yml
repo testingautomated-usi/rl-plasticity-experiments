@@ -1,0 +1,67 @@
+# full_pt_splines_discrete_vae_exp_1 (changed: num_timesteps_car_allowed_out: 15 --> 30)
+CarRacing-v2:
+  normalize: "{'norm_obs': True, 'norm_reward': False}"
+  n_envs: 16
+  n_timesteps: !!float 3e6
+  policy: 'MlpPolicy'
+  n_steps: 2048
+  nminibatches: 64
+  lam: 0.95
+  gamma: 0.99
+  noptepochs: 4
+  ent_coef: 0.001
+  learning_rate: !!float 2.5e-4
+  cliprange: 0.2
+
+CartPole-v1:
+  n_envs: 8
+  n_timesteps: !!float 1e5
+  policy: 'MlpPolicy'
+  n_steps: 32
+  nminibatches: 1
+  lam: 0.8
+  gamma: 0.98
+  noptepochs: 20
+  ent_coef: 0.0
+  learning_rate: lin_0.001
+  cliprange: lin_0.2
+
+# (faster training params)
+Pendulum-v0:
+  n_envs: 8
+  n_timesteps: 400000
+  policy: 'MlpPolicy'
+  n_steps: 1024
+  cliprange_vf: -1
+  nminibatches: 32
+  lam: 0.95
+  gamma: 0.99
+  noptepochs: 30
+  ent_coef: 0.0
+  learning_rate: !!float 1e-3
+  cliprange: lin_0.2
+
+MountainCar-v0:
+  normalize: "{'norm_obs': True}"
+  n_envs: 16
+  n_timesteps: !!float 8e5
+  learning_rate: !!float 3e-4
+  policy: 'MlpPolicy'
+  n_steps: 16
+  nminibatches: 1
+  lam: 0.98
+  gamma: 1.0
+  noptepochs: 8
+  ent_coef: 0.0
+
+Acrobot-v1:
+  normalize: "{'norm_obs': True}"
+  n_envs: 16
+  n_timesteps: !!float 2e5
+  policy: 'MlpPolicy'
+  n_steps: 256
+  nminibatches: 8
+  lam: 0.94
+  gamma: 0.99
+  noptepochs: 4
+  ent_coef: 0.0

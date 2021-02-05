@@ -1,0 +1,13 @@
+*.zip
+*.txt
+*.csv
+*.npz
+*.local
+*.DS_Store
+*.idea
+*_logs*
+__pycache__
+alphatest/
+random/
+gmail.yml
+script_to_delete.py

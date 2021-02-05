@@ -1,0 +1,12 @@
+CartPole-v1:
+  n_timesteps: !!float 1e5
+  policy: 'MlpPolicy'
+  policy_kwargs: "dict(layers=[128, 128])"
+  learning_rate: !!float 1e-3
+  buffer_size: 50000
+  target_network_update_freq: 500
+  train_freq: 4
+  learning_starts: 0
+  exploration_fraction: 0.1
+  exploration_final_eps: 0.02
+  prioritized_replay: True

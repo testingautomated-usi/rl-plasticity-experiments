@@ -1,0 +1,49 @@
+### INITIAL VALUES
+#goal_velocity:
+#  default_value: 0.0
+#  starting_value_if_zero: 0.005
+#  low_limit: 0.0
+#  high_limit: 0.2
+#  direction: 'positive'
+#
+#force:
+#  default_value: 0.001
+#  low_limit: 0.0001
+#  high_limit: 0.001
+#  direction: 'positive'
+#
+#gravity:
+#  default_value: 0.0025
+#  low_limit: 0.0025
+#  high_limit: 0.05
+#  direction: 'positive'
+
+# VALUES AFTER FINDING MULTIPLIERS AUTOMATICALLY (AVERAGED OVER 3 RUNS)
+# continual_learning_range = drop_range * 4, drop_range = [default_value, default_value * starting_multiplier] or
+# drop_range = [default_value * starting_multiplier, default_value] if starting_multiplier > 1.0. To uniform the
+# ranges of parameters between algorithms we take the maximum limit for a param in the case in which
+# starting_multipliers are different
+goal_velocity:
+  default_value: 0.0
+  starting_value_if_zero: 0.005
+  starting_multiplier: 12.0
+  percentage_drop: 28.36
+  low_limit: 0.0
+  high_limit: 0.24
+  direction: 'positive'
+
+force:
+  default_value: 0.001
+  starting_multiplier: 0.8
+  percentage_drop: 39.81
+  low_limit: 0.0002
+  high_limit: 0.001
+  direction: 'positive'
+
+gravity:
+  default_value: 0.0025
+  starting_multiplier: 1.5
+  percentage_drop: 46.01
+  low_limit: 0.0025
+  high_limit: 0.015
+  direction: 'positive'

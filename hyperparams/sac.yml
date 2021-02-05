@@ -1,0 +1,52 @@
+# full_pt_splines_vae_new_5_2 (friction limit is higher than the original one (400 -> 600), no normalization)
+CarRacing-v2:
+ n_timesteps: !!float 1e6
+ policy: 'LargeSACPolicy'
+ learning_rate: !!float 3e-4
+ buffer_size: 1000000
+ batch_size: 64
+# normalize: "{'norm_obs': True, 'norm_reward': True, 'clip_reward': 5.}"
+ ent_coef: 'auto_0.1'
+ train_freq: 1
+ gradient_steps: 500
+ learning_starts: 1000
+
+CartPole-v1:
+ n_timesteps: !!float 40000
+ policy: 'MlpPolicy'
+ learning_starts: 0
+ batch_size: 64
+ buffer_size: 40000
+ learning_rate: !!float 1e-3
+ policy_kwargs: "dict(layers=[256, 256])"
+ normalize: "{'norm_obs': True}"
+
+Pendulum-v0:
+ n_timesteps: !!float 30000
+ policy: 'MlpPolicy'
+ learning_starts: 0
+ batch_size: 64
+ buffer_size: 30000
+ normalize: "{'norm_obs': True}"
+ policy_kwargs: "dict(layers=[256, 256])"
+
+MountainCar-v0:
+ n_timesteps: !!float 60000
+ policy: 'MlpPolicy'
+ learning_rate: !!float 1e-3
+ learning_starts: 0
+ batch_size: 32
+ buffer_size: 50000
+ policy_kwargs: "dict(layers=[64, 64])"
+ normalize: "{'norm_obs': True}"
+ noise_type: 'normal'
+ noise_std: 0.2
+
+Acrobot-v1:
+ n_timesteps: !!float 60000
+ policy: 'MlpPolicy'
+ learning_starts: 0
+ batch_size: 64
+ buffer_size: 50000
+ learning_rate: !!float 1.25e-3
+ policy_kwargs: "dict(layers=[256, 256])"

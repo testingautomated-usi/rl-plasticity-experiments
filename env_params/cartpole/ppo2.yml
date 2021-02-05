@@ -1,0 +1,63 @@
+## INITIAL VALUES
+#masscart:
+#  default_value: 1.0
+#  low_limit: 1.0
+#  high_limit: 50.0
+#  direction: 'positive'
+#
+#masspole:
+#  default_value: 0.1
+#  low_limit: 0.1
+#  high_limit: 50.0
+#  direction: 'positive'
+#
+#length:
+#  default_value: 0.5
+#  low_limit: 0.5
+#  high_limit: 10.0
+#  direction: 'positive'
+#
+#cart_friction:
+#  default_value: 0.0
+#  starting_value_if_zero: 0.1
+#  low_limit: 0.0
+#  high_limit: 30.0
+#  direction: 'unknown'
+
+# VALUES AFTER FINDING MULTIPLIERS AUTOMATICALLY (AVERAGED OVER 3 RUNS)
+# continual_learning_range = drop_range * 4, drop_range = [default_value, default_value * starting_multiplier] or
+# drop_range = [default_value * starting_multiplier, default_value] if starting_multiplier > 1.0. To uniform the
+# ranges of parameters between algorithms we take the maximum limit for a param in the case in which
+# starting_multipliers are different
+masscart:
+  default_value: 1.0
+  low_limit: 1.0
+  high_limit: 64.0
+  starting_multiplier: 16.0
+  percentage_drop: 71.84
+  direction: 'positive'
+
+masspole:
+  default_value: 0.1
+  low_limit: 0.1
+  high_limit: 51.2
+  starting_multiplier: 128.0
+  percentage_drop: 53.33
+  direction: 'positive'
+
+length:
+  default_value: 0.5
+  low_limit: 0.5
+  high_limit: 8.0
+  starting_multiplier: 4.0
+  percentage_drop: 96.28
+  direction: 'positive'
+
+cart_friction:
+  default_value: 0.0
+  starting_value_if_zero: 0.1
+  low_limit: 0.0
+  high_limit: 51.2
+  starting_multiplier: 128.0
+  percentage_drop: 87.80
+  direction: 'positive'
