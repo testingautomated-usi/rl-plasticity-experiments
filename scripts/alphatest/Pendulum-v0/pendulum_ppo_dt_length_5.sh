@@ -8,5 +8,6 @@ python experiments.py --algo_name ppo2 \
 					  --param_names dt,length \
 					  --runs_for_probability_estimation 5 \
 					  --num_search_iterations 5 \
-					  --home_abs_path ~/rl-plasticity-experiments \
+					  --home_abs_path ~/workspace/rl-plasticity-experiments \
 					  --logging_level INFO
+cd ..
