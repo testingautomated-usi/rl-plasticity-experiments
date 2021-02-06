@@ -1,0 +1,25 @@
+Logging to ../rl-trained-agents/dqn/logs_pendulum
+--------------------------------------
+| % time spent exploring  | 2        |
+| episodes                | 100      |
+| mean 100 episode reward | -759     |
+| steps                   | 19800    |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 2        |
+| episodes                | 200      |
+| mean 100 episode reward | -166     |
+| steps                   | 39800    |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 2        |
+| episodes                | 300      |
+| mean 100 episode reward | -165     |
+| steps                   | 59800    |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 2        |
+| episodes                | 400      |
+| mean 100 episode reward | -148     |
+| steps                   | 79800    |
+--------------------------------------

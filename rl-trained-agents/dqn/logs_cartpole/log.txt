@@ -1,0 +1,37 @@
+Logging to ../rl-trained-agents/dqn/logs_cartpole
+--------------------------------------
+| % time spent exploring  | 71       |
+| episodes                | 100      |
+| mean 100 episode reward | 28.9     |
+| steps                   | 2858     |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 2        |
+| episodes                | 200      |
+| mean 100 episode reward | 137      |
+| steps                   | 16596    |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 2        |
+| episodes                | 300      |
+| mean 100 episode reward | 125      |
+| steps                   | 29116    |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 2        |
+| episodes                | 400      |
+| mean 100 episode reward | 152      |
+| steps                   | 44278    |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 2        |
+| episodes                | 500      |
+| mean 100 episode reward | 160      |
+| steps                   | 60321    |
+--------------------------------------
+--------------------------------------
+| % time spent exploring  | 2        |
+| episodes                | 600      |
+| mean 100 episode reward | 256      |
+| steps                   | 85890    |
+--------------------------------------
