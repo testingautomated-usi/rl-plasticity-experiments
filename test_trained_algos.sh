@@ -16,7 +16,7 @@ function execute_test {
 }
 
 # run with source ./test_trained_algos.sh in order that the command conda is recognized
-conda activate stable-baselines
+conda activate rl-plasticity-experiments
 
 cd src || exit
 

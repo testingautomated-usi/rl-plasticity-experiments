@@ -39,8 +39,8 @@ function compute_number_of_executions_skipped {
 
 }
 
-# run with source ./get_min_max_num_iterations.sh in order that the command conda is recognized
-conda activate stable-baselines
+# run with source ./analyze_number_of_executions_skipped_results.sh in order that the command conda is recognized
+conda activate rl-plasticity-experiments
 
 cd src || exit
 

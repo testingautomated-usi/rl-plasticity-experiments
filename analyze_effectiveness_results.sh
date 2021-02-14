@@ -33,8 +33,8 @@ function compute_effectiveness {
 
 }
 
-# run with source ./get_min_max_num_iterations.sh in order that the command conda is recognized
-conda activate stable-baselines
+# run with source ./analyze_effectiveness_results.sh in order that the command conda is recognized
+conda activate rl-plasticity-experiments
 
 cd src || exit
 

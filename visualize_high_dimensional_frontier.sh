@@ -37,8 +37,8 @@ function plot_high_dimensional_frontier {
 
 }
 
-# run with source ./get_min_max_num_iterations.sh in order that the command conda is recognized
-conda activate stable-baselines
+# run with source ./visualize_high_dimensional_frontier.sh in order that the command conda is recognized
+conda activate rl-plasticity-experiments
 
 cd src || exit
 
