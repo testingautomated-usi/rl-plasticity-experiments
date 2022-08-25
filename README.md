@@ -1,5 +1,5 @@
 # Testing the Plasticity of Reinforcement Learning Based Systems
-Source code and data for the paper "Testing the Plasticity of Reinforcement Learning Based Systems"
+Source code and data for the [paper](https://github.com/testingautomated-usi/rl-plasticity-experiments/blob/main/testing-the-plasticity-of-reinforcement-learning-based-systems.pdf) "Testing the Plasticity of Reinforcement Learning Based Systems"
 
 ## 1. Installation
 
