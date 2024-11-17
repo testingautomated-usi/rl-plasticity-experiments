@@ -1,5 +1,11 @@
 # Testing the Plasticity of Reinforcement Learning Based Systems
-Source code and data for the [paper](https://github.com/testingautomated-usi/rl-plasticity-experiments/blob/main/testing-the-plasticity-of-reinforcement-learning-based-systems.pdf) "Testing the Plasticity of Reinforcement Learning Based Systems"
+Source code and data for the [paper](https://github.com/testingautomated-usi/rl-plasticity-experiments/blob/main/testing-the-plasticity-of-reinforcement-learning-based-systems.pdf) "Testing the Plasticity of Reinforcement Learning Based Systems".
+
+The approach generates the map below:
+
+<img src="images/heatmaps-adaptation-discrimination.pdf" />
+
+The figure shows the adaptation heatmaps of `PPO`, `SAC` and `DQN` in the `CartPole` environment when only the `length` (*x* axis) and `cartfriction` (*y* axis) parameters are considered. The ranges of these two parameters are the same for each DRL algorithm and the colors in each heatmap indicate the adaptation probability, as shown by the color bar on the bottom right corner of the figure. The adaptation frontier is the yellow continuous line between the green (adaptation successful) and the red (adaptation failed) regions of the heatmap, while the black dots indicate the search points sampled by the search procedure of AlphaTest. From the maps we can see that the parameter `length` is more critical in terms of adaptation capabilities than the `cartfriction` parameter, for all the algorithms. In particular, no DRL algorithm adapted when `length = 4.0`, although `DQN` seems to be the best at tolerating the increase of such parameter, but all DRL algorithms adapted when `cartfriction = 51.20`. The adaptation heatmaps are easily interpretable by developers, as they show the regions of the parameter space where the adaptation frontier lies and where we can expect a certain algorithm to successfully adapt or not when the initial conditions of the environment change.
 
 ## 1. Installation
 
@@ -68,7 +74,7 @@ python analyze_volume_results.py --dir ~/workspace/rl-plasticity-experiments/alp
 The previous command should produce a txt file called `analyze_volume_results_adapt_regress_probability_g_1.0.txt` in `alphatest/CartPole-v1/ppo2/n_iterations_length_cart_friction_8_0` where at the end it is written the adapation volume and the anti-regression volume (it is called regression volume in the txt file for brevity). In the same directory there are two pdf files called `heatmap_adaptation_probability_iteration_g_1.0_0.pdf` and `heatmap_regression_probability_iteration_g_1.0_0.pdf` for the adaptation probability and regression probability respectively. The adaptation probability heatmap is red where the algorithm did not adapt successfully and it is green otherwise; for the regression heatmap the opposite holds and the gray region is where it is not defined. The black points are the search points sampled during the search phase.
 
 ## 4. Data
-The results of the experiments for all environments (i.e. CartPole, Pendulum, MountainCar, Acrobot) all RL algorithms (i.e. PPO, SAC, DQN) and all search methods (i.e. alphatest and random) are available for download [at this link](https://drive.google.com/file/d/1lMZ-GOMh-qgBCnfaxfDHPfJpmM2D6q3N/view?usp=sharing).
+The results of the experiments for all environments (i.e. CartPole, Pendulum, MountainCar, Acrobot) all RL algorithms (i.e. PPO, SAC, DQN) and all search methods (i.e. alphatest and random) are available for download [at this link](https://drive.switch.ch/index.php/s/yUzYGOiS1pN1t5b).
 
 ## 5. Citing the Project
 
