@@ -10,8 +10,8 @@ from log import Log
 
 class PendulumEvalCallback(EnvEvalCallback):
 
-    # i.e. performance is not adequate when there is a 30% degradation wrt reward threshold
-    def __init__(self, reward_threshold=-145.0, unacceptable_pct_degradation=30.0):
+    # i.e. performance is not adequate when there is a 20% degradation wrt reward threshold
+    def __init__(self, reward_threshold=-145.0, unacceptable_pct_degradation=20.0):
         self.reward_threshold = reward_threshold
         self.unacceptable_pct_degradation = unacceptable_pct_degradation
         self.logger = Log("PendulumEvalCallback")
