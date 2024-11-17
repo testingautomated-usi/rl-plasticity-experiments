@@ -69,3 +69,25 @@ The previous command should produce a txt file called `analyze_volume_results_ad
 
 ## 4. Data
 The results of the experiments for all environments (i.e. CartPole, Pendulum, MountainCar, Acrobot) all RL algorithms (i.e. PPO, SAC, DQN) and all search methods (i.e. alphatest and random) are available for download [at this link](https://drive.google.com/file/d/1lMZ-GOMh-qgBCnfaxfDHPfJpmM2D6q3N/view?usp=sharing).
+
+## 5. Citing the Project
+
+To cite this repository in publications:
+
+```bibtex
+@article{DBLP:journals/tosem/BiagiolaT22,
+  author       = {Matteo Biagiola and
+                  Paolo Tonella},
+  title        = {Testing the Plasticity of Reinforcement Learning-based Systems},
+  journal      = {{ACM} Trans. Softw. Eng. Methodol.},
+  volume       = {31},
+  number       = {4},
+  pages        = {80:1--80:46},
+  year         = {2022},
+  url          = {https://doi.org/10.1145/3511701},
+  doi          = {10.1145/3511701},
+  timestamp    = {Mon, 28 Aug 2023 21:25:10 +0200},
+  biburl       = {https://dblp.org/rec/journals/tosem/BiagiolaT22.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+```
